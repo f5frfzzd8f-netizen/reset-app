@@ -1,0 +1,1548 @@
+const storageKey = "reset-pwa.state.v4";
+
+const statusLabels = {
+  clean: "Clean",
+  "not-clean": "Nicht clean",
+  stopped: "Abgebrochen"
+};
+
+const emergencyActions = [
+  {
+    time: "90 sek",
+    title: "Urge surfen",
+    text: "Sag dir: Das ist nur eine Welle. Beobachte den Drang, ohne zu handeln, bis er schwächer wird."
+  },
+  {
+    time: "2 min",
+    title: "Raum wechseln",
+    text: "Steh sofort auf. Geh in Küche, Bad, Balkon oder vor die Tür. Kein Handy im selben Raum."
+  },
+  {
+    time: "3 min",
+    title: "Kalter Reset",
+    text: "Wasch Gesicht und Hände kalt. Danach zehn ruhige Atemzüge mit beiden Füssen am Boden."
+  },
+  {
+    time: "5 min",
+    title: "Blocker-Modus",
+    text: "Lege das Gerät weg, aktiviere Fokuszeit oder gib es einer Person in deiner Nähe."
+  },
+  {
+    time: "10 min",
+    title: "Körper bewegen",
+    text: "Mach Liegestütze, Spaziergang oder Treppen. Ziel ist nicht Fitness, sondern Unterbrechung."
+  },
+  {
+    time: "1 Nachricht",
+    title: "Jemandem schreiben",
+    text: "Schick eine kurze Nachricht: 'Ich brauche gerade Ablenkung. Kannst du kurz schreiben?'"
+  },
+  {
+    time: "2 min",
+    title: "Handy weglegen",
+    text: "Lege das Handy ausser Reichweite: Flur, Küche oder in eine Schublade. Nicht neben dich."
+  },
+  {
+    time: "3 min",
+    title: "Browser schliessen",
+    text: "Schliesse alle Tabs, die in Richtung Konsum führen. Danach öffne nur diese App."
+  },
+  {
+    time: "5 min",
+    title: "Wasser trinken",
+    text: "Trink ein grosses Glas Wasser langsam aus und bleib dabei stehen."
+  },
+  {
+    time: "4 min",
+    title: "Atem zählen",
+    text: "Atme vier Sekunden ein, sechs aus. Zähle zehn Atemzüge, ohne nebenbei zu scrollen."
+  },
+  {
+    time: "1 min",
+    title: "Licht an",
+    text: "Mach helles Licht an und öffne Vorhang oder Fenster. Raus aus der heimlichen Stimmung."
+  },
+  {
+    time: "6 min",
+    title: "Duschen",
+    text: "Geh direkt duschen. Warm starten, am Ende kalt. Danach frische Kleidung anziehen."
+  },
+  {
+    time: "8 min",
+    title: "Spaziergang",
+    text: "Schuhe an, Wohnung verlassen, eine kleine Runde. Kein Verhandeln mit dem Drang."
+  },
+  {
+    time: "2 min",
+    title: "Trigger benennen",
+    text: "Sag laut: Was fühle ich gerade? Stress, Einsamkeit, Langeweile, Müdigkeit oder Druck?"
+  },
+  {
+    time: "3 min",
+    title: "Ziel erinnern",
+    text: "Schreib einen Satz: Warum will ich pornofrei leben? Mach ihn konkret."
+  },
+  {
+    time: "5 min",
+    title: "Push-ups",
+    text: "Mach so viele saubere Wiederholungen wie gehen. Danach 30 Sekunden ruhig stehen."
+  },
+  {
+    time: "5 min",
+    title: "Treppen",
+    text: "Geh ein paar Stockwerke hoch und runter. Körper zuerst, Kopf danach."
+  },
+  {
+    time: "2 min",
+    title: "Fokusmodus",
+    text: "Aktiviere Fokuszeit, Bildschirmzeit oder App-Limit. Entferne die einfache Abkürzung."
+  },
+  {
+    time: "10 min",
+    title: "Öffentlicher Ort",
+    text: "Setz dich an einen Ort, an dem Konsum unmöglich wäre: Küche, Café, Bibliothek, Wohnzimmer."
+  },
+  {
+    time: "3 min",
+    title: "Urge-Skala",
+    text: "Bewerte den Drang von 1 bis 10. Warte zwei Minuten und bewerte erneut."
+  },
+  {
+    time: "1 min",
+    title: "Nicht anfassen",
+    text: "Hände sichtbar auf den Tisch oder an die Seite. Körperliche Unterbrechung zählt."
+  },
+  {
+    time: "5 min",
+    title: "Mini-Aufräumen",
+    text: "Räume genau eine Fläche auf: Schreibtisch, Bett, Boden oder Waschbecken."
+  },
+  {
+    time: "7 min",
+    title: "Musikwechsel",
+    text: "Starte ein Lied, das dich aus der Stimmung holt. Keine traurige oder sexualisierte Playlist."
+  },
+  {
+    time: "3 min",
+    title: "Kaugummi",
+    text: "Iss etwas Minziges oder kaue Kaugummi. Ein neuer Sinnesreiz kann die Schleife brechen."
+  },
+  {
+    time: "10 min",
+    title: "Podcast kurz",
+    text: "Starte eine harmlose Folge oder ein Lernvideo und bleib dabei in Bewegung."
+  },
+  {
+    time: "5 min",
+    title: "Tagebuch-Satz",
+    text: "Schreib: 'Ich will gerade konsumieren, weil ...' Dann schreib eine Alternative."
+  },
+  {
+    time: "2 min",
+    title: "Passwort-Hürde",
+    text: "Logge dich aus riskanten Seiten aus oder entferne gespeicherte Zugänge."
+  },
+  {
+    time: "5 min",
+    title: "Bett verlassen",
+    text: "Wenn du im Bett bist: sofort aufstehen. Bett ist Schlaf-Ort, kein Scroll-Ort."
+  },
+  {
+    time: "4 min",
+    title: "Fenster auf",
+    text: "Öffne das Fenster, atme frische Luft, schau auf etwas Reales draussen."
+  },
+  {
+    time: "8 min",
+    title: "Snack machen",
+    text: "Mach dir etwas Einfaches zu essen. Hunger oder Müdigkeit tarnen sich oft als Drang."
+  },
+  {
+    time: "2 min",
+    title: "Morgen vorstellen",
+    text: "Stell dir vor, wie du dich morgen fühlst, wenn du jetzt clean bleibst."
+  },
+  {
+    time: "2 min",
+    title: "Rückfall vorspulen",
+    text: "Spul ehrlich vor: Wie fühlst du dich zehn Minuten nach Konsum?"
+  },
+  {
+    time: "1 min",
+    title: "App wechseln",
+    text: "Schliesse die riskante App komplett. Öffne Kalender, Notizen oder diese App."
+  },
+  {
+    time: "5 min",
+    title: "Kontaktliste",
+    text: "Öffne Kontakte und wähle eine Person, der du notfalls schreiben kannst."
+  },
+  {
+    time: "3 min",
+    title: "Body Scan",
+    text: "Spüre Füsse, Beine, Bauch, Schultern, Gesicht. Der Drang ist Körpergefühl, kein Befehl."
+  },
+  {
+    time: "6 min",
+    title: "Dehnen",
+    text: "Dehne Rücken, Hüfte und Nacken. Langsam, ohne Bildschirm."
+  },
+  {
+    time: "10 min",
+    title: "Offline gehen",
+    text: "WLAN oder mobile Daten aus. Timer stellen. Danach neu entscheiden."
+  },
+  {
+    time: "3 min",
+    title: "Accountability",
+    text: "Schreib an eine Vertrauensperson: 'Ich bleibe gerade clean. Bitte kurz Daumen drücken.'"
+  },
+  {
+    time: "5 min",
+    title: "Warum-Liste",
+    text: "Lies oder schreibe drei Gründe, warum du aufhören willst."
+  },
+  {
+    time: "2 min",
+    title: "Keine Debatte",
+    text: "Sag: 'Ich diskutiere nicht mit dem Drang.' Dann mach eine konkrete Aktion."
+  },
+  {
+    time: "15 min",
+    title: "Ort mit Menschen",
+    text: "Geh zu Mitbewohnern, Familie, ins Treppenhaus oder an einen belebten Ort."
+  },
+  {
+    time: "4 min",
+    title: "Ablenk-Aufgabe",
+    text: "Rechne 17er-Schritte rückwärts von 300 oder sortiere zehn Gegenstände."
+  },
+  {
+    time: "10 min",
+    title: "Lesen",
+    text: "Lies zehn Seiten oder einen Artikel, der nichts mit Sexualität zu tun hat."
+  },
+  {
+    time: "5 min",
+    title: "Wäsche",
+    text: "Starte Wäsche, falte Kleidung oder räume fünf Kleidungsstücke weg."
+  },
+  {
+    time: "2 min",
+    title: "Auslöser entfernen",
+    text: "Entferne das Bild, Profil, Video, Chat oder die App, die dich gerade triggert."
+  },
+  {
+    time: "5 min",
+    title: "Atem + Stand",
+    text: "Steh breit, Schultern locker, atme langsam. Warte, bis dein Puls sinkt."
+  },
+  {
+    time: "10 min",
+    title: "Kurz trainieren",
+    text: "Mach ein Mini-Workout: Kniebeugen, Plank, Hampelmänner, Pause."
+  },
+  {
+    time: "3 min",
+    title: "Heute markieren",
+    text: "Drück hier auf Clean oder Abgebrochen. Sichtbarer Fortschritt hilft beim Aussteigen."
+  },
+  {
+    time: "5 min",
+    title: "Beten/Meditieren",
+    text: "Falls es zu dir passt: bete, meditiere oder sitze still mit einer klaren Absicht."
+  },
+  {
+    time: "2 min",
+    title: "Stuhl wechseln",
+    text: "Setz dich auf einen anderen Stuhl oder an den Tisch. Kleine Ortswechsel wirken."
+  },
+  {
+    time: "8 min",
+    title: "Plan schreiben",
+    text: "Schreib die nächsten drei Schritte: aufstehen, Gerät weg, rausgehen."
+  },
+  {
+    time: "5 min",
+    title: "Sicherer Bildschirm",
+    text: "Öffne etwas Neutrales im Vollbild: Lernstoff, Wetter, Rezept oder Musik."
+  },
+  {
+    time: "3 min",
+    title: "Scham stoppen",
+    text: "Sag dir: 'Ich bin nicht mein Drang.' Dann wähle die nächste hilfreiche Handlung."
+  },
+  {
+    time: "12 min",
+    title: "Erledigung",
+    text: "Mach eine kleine Aufgabe, die längst wartet. Abschlussgefühl schlägt Betäubung."
+  },
+  {
+    time: "1 min",
+    title: "Timer setzen",
+    text: "Setze einen Timer auf zehn Minuten. Bis er klingelt, wird nichts konsumiert."
+  }
+];
+
+const defaultTools = [
+  "Handy aus dem Zimmer legen",
+  "Kurz nach draussen gehen",
+  "Kalt duschen oder Gesicht waschen"
+];
+
+const defaultTriggers = ["Stress", "Langeweile", "Einsamkeit", "Müdigkeit", "Social Media", "Bett", "Nacht", "Druck", "Frust"];
+const badgeMilestones = [1, 3, 7, 14, 30, 60, 90, 180, 365];
+const defaultReasons = [
+  "Ich will frei entscheiden können.",
+  "Ich will morgen stolz aufwachen.",
+  "Ich will echte Nähe statt Betäubung.",
+  "Ich will meine Energie zurück.",
+  "Ich will klarer denken.",
+  "Ich will weniger Scham fühlen.",
+  "Ich will meine Zeit für echte Ziele nutzen.",
+  "Ich will Beziehungen ehrlicher leben.",
+  "Ich will nicht von Impulsen gesteuert werden.",
+  "Ich will stärker werden, wenn es schwer wird.",
+  "Ich will Schlaf und Erholung verbessern.",
+  "Ich will mein Selbstvertrauen aufbauen.",
+  "Ich will weniger heimlich leben.",
+  "Ich will meine Werte ernst nehmen.",
+  "Ich will mich wieder mehr spüren.",
+  "Ich will nicht in alten Mustern bleiben.",
+  "Ich will meine Konzentration schützen.",
+  "Ich will meine Sexualität gesünder leben.",
+  "Ich will langfristig stolz auf mich sein.",
+  "Ich will echte Verbindung suchen.",
+  "Ich will Stress anders regulieren lernen.",
+  "Ich will mich nicht mehr danach leer fühlen.",
+  "Ich will meine Grenzen respektieren.",
+  "Ich will mein Handy bewusster nutzen.",
+  "Ich will schwierige Gefühle aushalten können.",
+  "Ich will ehrlich mit mir sein.",
+  "Ich will weniger Zeit verlieren.",
+  "Ich will mein Gehirn neu trainieren.",
+  "Ich will nicht vor Einsamkeit fliehen.",
+  "Ich will meine Zukunft nicht sabotieren.",
+  "Ich will Geduld mit mir lernen.",
+  "Ich will mehr Disziplin in kleinen Momenten.",
+  "Ich will meinem Körper gut begegnen.",
+  "Ich will nicht mehr automatisch reagieren.",
+  "Ich will Rückfälle verstehen statt verdrängen.",
+  "Ich will stolz auf meine Abende sein.",
+  "Ich will bessere Gewohnheiten aufbauen.",
+  "Ich will meinen Fokus zurückholen.",
+  "Ich will weniger Trigger suchen.",
+  "Ich will mein Leben aktiver gestalten.",
+  "Ich will echten Trost statt schnellen Kick.",
+  "Ich will Frieden mit mir selbst.",
+  "Ich will Nähe nicht durch Bildschirm ersetzen.",
+  "Ich will Verantwortung übernehmen.",
+  "Ich will meine Ziele nicht aus den Augen verlieren.",
+  "Ich will lernen, Nein zu sagen.",
+  "Ich will meinen Fortschritt sehen.",
+  "Ich will sauberer mit Rückschlägen umgehen.",
+  "Ich will freier, ruhiger und klarer werden.",
+  "Ich will heute gewinnen, nicht irgendwann."
+];
+const defaultMotivations = [
+  "Heute reicht der nächste gute Schritt.",
+  "Du musst nur diese eine Welle überstehen.",
+  "Der Drang ist laut, aber nicht dein Chef.",
+  "Zehn Minuten clean bleiben ist jetzt ein Sieg.",
+  "Du musst dich nicht perfekt fühlen, um richtig zu handeln.",
+  "Steh auf, wechsel den Ort, ändere den Verlauf.",
+  "Morgen dankt dir für diese Entscheidung.",
+  "Nicht verhandeln, handeln.",
+  "Ein Rückfall beginnt oft mit einem kleinen Ja. Sag jetzt Nein.",
+  "Du bist nicht dein Impuls.",
+  "Scham will dich verstecken lassen. Fortschritt will Licht.",
+  "Du trainierst Freiheit, nicht Perfektion.",
+  "Jede unterbrochene Schleife zählt.",
+  "Du kannst dich schlecht fühlen und trotzdem clean bleiben.",
+  "Der Drang steigt, bleibt kurz und fällt wieder.",
+  "Nimm das Handy aus dem Raum. Jetzt.",
+  "Du brauchst keinen Kick, du brauchst einen Wechsel.",
+  "Heute ist ein Baustein, kein Endurteil.",
+  "Du kannst die nächsten zwei Minuten schaffen.",
+  "Der Ausstieg beginnt mitten im Drang.",
+  "Ehrlichkeit ist stärker als Heimlichkeit.",
+  "Du bist schon weiter, sobald du stoppst.",
+  "Nicht clean zu werden ist kein Zufall, sondern Übung.",
+  "Dein Ziel ist wichtiger als diese Welle.",
+  "Mach es dir schwer zu konsumieren und leicht zu gehen.",
+  "Dein Körper braucht Bewegung, nicht Scrollen.",
+  "Du willst frei sein. Handle wie jemand, der frei wird.",
+  "Ein klarer Abend ist mehr wert als ein kurzer Kick.",
+  "Du darfst neu starten, ohne dich fertigzumachen.",
+  "Halte Abstand zum Trigger, nicht zu dir selbst.",
+  "Kleine Schutzmaßnahmen retten große Ziele.",
+  "Heute nicht. Das ist genug.",
+  "Der Moment geht vorbei. Deine Entscheidung bleibt.",
+  "Du musst den Gedanken nicht fertigdenken.",
+  "Raus aus dem Zimmer, raus aus der Schleife.",
+  "Wenn es dringend wirkt, ist genau dann Pause wichtig.",
+  "Du schuldest dem Drang keine Antwort.",
+  "Ein sauberer Morgen beginnt jetzt.",
+  "Du baust Vertrauen in dich auf.",
+  "Mach den nächsten Schritt sichtbar: Wasser, Licht, Bewegung.",
+  "Du kannst abbrechen, auch wenn du schon angefangen hast.",
+  "Clean bleiben ist Selbstrespekt in Aktion.",
+  "Du wirst stärker durch wiederholtes Stoppen.",
+  "Der schnellste Weg raus ist eine konkrete Handlung.",
+  "Du brauchst gerade Unterstützung, nicht Verurteilung.",
+  "Nicht allein im Kopf bleiben: schreib, geh, atme.",
+  "Der Wunsch nach Konsum ist ein Signal, kein Befehl.",
+  "Du hast schon schwierige Momente überstanden.",
+  "Wähle die Version von dir, die morgen aufrechter steht.",
+  "Jetzt ist der Trainingsmoment."
+];
+
+const builtInEmergencyActions = emergencyActions.map((action, index) => ({
+  ...action,
+  id: `built-in-${index}`
+}));
+
+const state = loadState();
+let calendarCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let selectedEmergencyAction = null;
+let timerInterval = null;
+let timerTotalSeconds = 0;
+let timerRemainingSeconds = 0;
+let noteAutosaveTimer = null;
+let noteFeedbackTimer = null;
+let reasonRotationTimer = null;
+let motivationRotationTimer = null;
+
+const streakDays = document.querySelector("#streakDays");
+const recordDays = document.querySelector("#recordDays");
+const streakLabel = document.querySelector("#streakLabel");
+const lastSetback = document.querySelector("#lastSetback");
+const todayLabel = document.querySelector("#todayLabel");
+const statusHint = document.querySelector("#statusHint");
+const statusGrid = document.querySelector("#statusGrid");
+const triggerGrid = document.querySelector("#triggerGrid");
+const cravingRange = document.querySelector("#cravingRange");
+const cravingValue = document.querySelector("#cravingValue");
+const checkinNote = document.querySelector("#checkinNote");
+const saveCheckinNoteButton = document.querySelector("#saveCheckinNoteButton");
+const noteSaveStatus = document.querySelector("#noteSaveStatus");
+const privacyButton = document.querySelector("#privacyButton");
+const privacyCard = document.querySelector("#privacyCard");
+const exportButton = document.querySelector("#exportButton");
+const heroEmergencyButton = document.querySelector("#heroEmergencyButton");
+const relapseBox = document.querySelector("#relapseBox");
+const relapseTriggerInput = document.querySelector("#relapseTriggerInput");
+const relapseNextInput = document.querySelector("#relapseNextInput");
+const saveRelapseButton = document.querySelector("#saveRelapseButton");
+const stoppedBox = document.querySelector("#stoppedBox");
+const featuredTime = document.querySelector("#featuredTime");
+const featuredTitle = document.querySelector("#featuredTitle");
+const featuredText = document.querySelector("#featuredText");
+const randomEmergency = document.querySelector("#randomEmergency");
+const startFeaturedButton = document.querySelector("#startFeaturedButton");
+const quickActions = document.querySelector("#quickActions");
+const customEmergencyForm = document.querySelector("#customEmergencyForm");
+const customEmergencyTitle = document.querySelector("#customEmergencyTitle");
+const customEmergencyMinutes = document.querySelector("#customEmergencyMinutes");
+const customEmergencyText = document.querySelector("#customEmergencyText");
+const toolInput = document.querySelector("#toolInput");
+const addToolButton = document.querySelector("#addToolButton");
+const toolList = document.querySelector("#toolList");
+const historyList = document.querySelector("#historyList");
+const emptyHistory = document.querySelector("#emptyHistory");
+const resetButton = document.querySelector("#resetButton");
+const calendarTitle = document.querySelector("#calendarTitle");
+const calendarGrid = document.querySelector("#calendarGrid");
+const prevMonthButton = document.querySelector("#prevMonthButton");
+const nextMonthButton = document.querySelector("#nextMonthButton");
+const focusOverlay = document.querySelector("#focusOverlay");
+const focusTitle = document.querySelector("#focusTitle");
+const focusText = document.querySelector("#focusText");
+const timerDisplay = document.querySelector("#timerDisplay");
+const timerProgress = document.querySelector("#timerProgress");
+const startTimerButton = document.querySelector("#startTimerButton");
+const emergencySuccessButton = document.querySelector("#emergencySuccessButton");
+const cancelTimerButton = document.querySelector("#cancelTimerButton");
+const closeFocusButton = document.querySelector("#closeFocusButton");
+const dayOverlay = document.querySelector("#dayOverlay");
+const dayModalTitle = document.querySelector("#dayModalTitle");
+const dayStatusPill = document.querySelector("#dayStatusPill");
+const dayNoteText = document.querySelector("#dayNoteText");
+const closeDayButton = document.querySelector("#closeDayButton");
+const statCleanRate = document.querySelector("#statCleanRate");
+const statCheckins = document.querySelector("#statCheckins");
+const statAverageCraving = document.querySelector("#statAverageCraving");
+const statBestMonth = document.querySelector("#statBestMonth");
+const statEmergencyUses = document.querySelector("#statEmergencyUses");
+const statEmergencySuccess = document.querySelector("#statEmergencySuccess");
+const statBestEmergency = document.querySelector("#statBestEmergency");
+const triggerAnalysis = document.querySelector("#triggerAnalysis");
+const badgeGrid = document.querySelector("#badgeGrid");
+const planForm = document.querySelector("#planForm");
+const planInput = document.querySelector("#planInput");
+const planList = document.querySelector("#planList");
+const reasonForm = document.querySelector("#reasonForm");
+const reasonInput = document.querySelector("#reasonInput");
+const reasonCard = document.querySelector("#reasonCard");
+const motivationCard = document.querySelector("#motivationCard");
+const newMotivationButton = document.querySelector("#newMotivationButton");
+const newReasonButton = document.querySelector("#newReasonButton");
+const celebration = document.querySelector("#celebration");
+const celebrationTitle = document.querySelector("#celebrationTitle");
+const celebrationText = document.querySelector("#celebrationText");
+const tabButtons = document.querySelectorAll("[data-tab-target]");
+const tabSections = document.querySelectorAll("[data-tab]");
+const dayStatusSelect = document.querySelector("#dayStatusSelect");
+const dayNoteEdit = document.querySelector("#dayNoteEdit");
+const saveDayButton = document.querySelector("#saveDayButton");
+let selectedDayKey = dateKey();
+
+function loadState() {
+  const fallback = {
+    checkins: [],
+    tools: defaultTools,
+    featuredActionIndex: 0,
+    favoriteEmergencyIds: [],
+    customEmergencyActions: [],
+    emergencyLog: [],
+    emergencyOrder: [],
+    reasons: defaultReasons,
+    dailyPlans: {},
+    privacyMode: false
+  };
+
+  try {
+    const stored = JSON.parse(localStorage.getItem(storageKey));
+    return {
+      ...fallback,
+      ...stored,
+      favoriteEmergencyIds: stored?.favoriteEmergencyIds ?? [],
+      customEmergencyActions: stored?.customEmergencyActions ?? [],
+      emergencyLog: stored?.emergencyLog ?? [],
+      emergencyOrder: stored?.emergencyOrder ?? [],
+      reasons: normalizeReasons(stored?.reasons),
+      dailyPlans: stored?.dailyPlans ?? {},
+      privacyMode: Boolean(stored?.privacyMode)
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function saveState() {
+  localStorage.setItem(storageKey, JSON.stringify(state));
+}
+
+function normalizeReasons(storedReasons) {
+  if (!Array.isArray(storedReasons) || storedReasons.length === 0) {
+    return defaultReasons;
+  }
+
+  const oldDefaults = ["Ich will frei entscheiden können.", "Ich will morgen stolz aufwachen."];
+  const onlyOldDefaults =
+    storedReasons.length <= oldDefaults.length && storedReasons.every((reason) => oldDefaults.includes(reason));
+
+  if (onlyOldDefaults) {
+    return defaultReasons;
+  }
+
+  return [...new Set([...storedReasons, ...defaultReasons])];
+}
+
+function createId(prefix) {
+  if (globalThis.crypto?.randomUUID) {
+    return `${prefix}-${globalThis.crypto.randomUUID()}`;
+  }
+
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function dateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatDay(value) {
+  return new Intl.DateTimeFormat("de-CH", {
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit"
+  }).format(new Date(`${value}T12:00:00`));
+}
+
+function daysBetween(from, to) {
+  const start = new Date(`${from}T00:00:00`);
+  const end = new Date(`${to}T00:00:00`);
+  return Math.round((end - start) / 86400000);
+}
+
+function getTodayCheckin() {
+  return state.checkins.find((entry) => entry.date === dateKey());
+}
+
+function getCheckinByDate(value) {
+  return state.checkins.find((entry) => entry.date === value);
+}
+
+function ensureCheckin(date = dateKey()) {
+  let entry = getCheckinByDate(date);
+
+  if (!entry) {
+    entry = {
+      id: createId("checkin"),
+      date,
+      status: "",
+      note: "",
+      triggers: [],
+      craving: 0,
+      relapseTrigger: "",
+      nextStep: "",
+      updatedAt: new Date().toISOString()
+    };
+    state.checkins.unshift(entry);
+  }
+
+  return entry;
+}
+
+function getEmergencyActions() {
+  const actions = [...builtInEmergencyActions, ...state.customEmergencyActions];
+  const order = state.emergencyOrder.length ? state.emergencyOrder : actions.map((action) => action.id);
+  return [...actions].sort((a, b) => {
+    const aIndex = order.indexOf(a.id);
+    const bIndex = order.indexOf(b.id);
+    return (aIndex === -1 ? 9999 : aIndex) - (bIndex === -1 ? 9999 : bIndex);
+  });
+}
+
+function getFeaturedAction() {
+  const actions = getEmergencyActions();
+  return actions[state.featuredActionIndex % actions.length] ?? actions[0];
+}
+
+function isFavorite(action) {
+  return state.favoriteEmergencyIds.includes(action.id);
+}
+
+function sortEmergencyActions(actions) {
+  return [...actions].sort((a, b) => {
+    const favoriteScore = Number(isFavorite(b)) - Number(isFavorite(a));
+    if (favoriteScore !== 0) {
+      return favoriteScore;
+    }
+
+    return Number(Boolean(b.custom)) - Number(Boolean(a.custom));
+  });
+}
+
+function bindPress(element, handler) {
+  let lastPress = 0;
+
+  element.addEventListener("pointerup", (event) => {
+    lastPress = Date.now();
+    event.preventDefault();
+    handler(event);
+  });
+
+  element.addEventListener("touchend", (event) => {
+    if (Date.now() - lastPress < 450) {
+      return;
+    }
+
+    lastPress = Date.now();
+    event.preventDefault();
+    handler(event);
+  });
+
+  element.addEventListener("click", (event) => {
+    if (Date.now() - lastPress < 450) {
+      return;
+    }
+
+    handler(event);
+  });
+}
+
+function setStatus(status) {
+  const previousRecord = getRecordStreak();
+  const today = dateKey();
+  const entry = ensureCheckin(today);
+  entry.status = status;
+  entry.note = checkinNote.value.trim();
+  entry.triggers = getSelectedTriggers();
+  entry.craving = Number(cravingRange.value);
+  entry.updatedAt = new Date().toISOString();
+
+  saveState();
+  render();
+  maybeCelebrateMilestone(previousRecord, getRecordStreak());
+}
+
+function getCurrentStreak() {
+  const sorted = [...state.checkins].sort((a, b) => b.date.localeCompare(a.date));
+  let current = 0;
+  let cursor = dateKey();
+
+  for (const entry of sorted) {
+    if (entry.date !== cursor) {
+      const gap = daysBetween(entry.date, cursor);
+      if (gap > 1) {
+        break;
+      }
+      cursor = entry.date;
+    }
+
+    if (entry.status !== "clean") {
+      break;
+    }
+
+    current += 1;
+    const previous = new Date(`${cursor}T12:00:00`);
+    previous.setDate(previous.getDate() - 1);
+    cursor = dateKey(previous);
+  }
+
+  return current;
+}
+
+function getRecordStreak() {
+  const sorted = [...state.checkins]
+    .filter((entry) => entry.status)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  let record = 0;
+  let current = 0;
+  let previousCleanDate = null;
+
+  for (const entry of sorted) {
+    if (entry.status !== "clean") {
+      current = 0;
+      previousCleanDate = null;
+      continue;
+    }
+
+    if (previousCleanDate && daysBetween(previousCleanDate, entry.date) === 1) {
+      current += 1;
+    } else {
+      current = 1;
+    }
+
+    previousCleanDate = entry.date;
+    record = Math.max(record, current);
+  }
+
+  return record;
+}
+
+function getLastSetback() {
+  return state.checkins.find((entry) => entry.status === "not-clean" || entry.status === "stopped");
+}
+
+function addTool() {
+  const value = toolInput.value.trim();
+  if (!value) {
+    toolInput.focus();
+    return;
+  }
+
+  state.tools = [value, ...state.tools];
+  toolInput.value = "";
+  saveState();
+  renderTools();
+  toolInput.focus();
+}
+
+function deleteTool(index) {
+  state.tools.splice(index, 1);
+  saveState();
+  renderTools();
+}
+
+function rotateEmergency() {
+  const actions = getEmergencyActions();
+  state.featuredActionIndex = Math.floor(Math.random() * actions.length);
+  saveState();
+  renderEmergency();
+  openEmergency(getFeaturedAction());
+}
+
+function parseActionSeconds(action) {
+  if (action.seconds) {
+    return action.seconds;
+  }
+
+  const time = action.time;
+  const number = Number.parseInt(time, 10);
+
+  if (time.includes("sek")) {
+    return Number.isNaN(number) ? 90 : number;
+  }
+
+  if (time.includes("Nachricht")) {
+    return 180;
+  }
+
+  return (Number.isNaN(number) ? 5 : number) * 60;
+}
+
+function formatTimer(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(rest).padStart(2, "0")}`;
+}
+
+function updateTimerDisplay() {
+  timerDisplay.textContent = formatTimer(timerRemainingSeconds);
+  const progress = timerTotalSeconds > 0 ? 1 - timerRemainingSeconds / timerTotalSeconds : 0;
+  timerProgress.style.width = `${Math.max(0, Math.min(100, progress * 100))}%`;
+}
+
+function openEmergency(action) {
+  selectedEmergencyAction = action;
+  timerTotalSeconds = parseActionSeconds(action);
+  timerRemainingSeconds = timerTotalSeconds;
+  stopTimer(false);
+
+  focusTitle.textContent = action.title;
+  focusText.textContent = action.text;
+  startTimerButton.textContent = "Start";
+  startTimerButton.disabled = false;
+  focusOverlay.hidden = false;
+  document.body.classList.add("modal-open");
+  updateTimerDisplay();
+}
+
+function closeEmergency() {
+  stopTimer(false);
+  focusOverlay.hidden = true;
+  document.body.classList.remove("modal-open");
+}
+
+function markEmergencySuccess() {
+  if (!selectedEmergencyAction) {
+    return;
+  }
+
+  state.emergencyLog = [
+    {
+      id: createId("emergency"),
+      actionId: selectedEmergencyAction.id,
+      title: selectedEmergencyAction.title,
+      success: true,
+      createdAt: new Date().toISOString()
+    },
+    ...state.emergencyLog
+  ];
+  saveState();
+  renderStats();
+  closeEmergency();
+  celebrationTitle.textContent = "Drang überwunden";
+  celebrationText.textContent = "Du hast eine Notfallhilfe genutzt und bist ausgestiegen.";
+  celebration.hidden = false;
+  window.setTimeout(() => {
+    celebration.hidden = true;
+  }, 2200);
+}
+
+function startTimer() {
+  if (!selectedEmergencyAction || timerInterval) {
+    return;
+  }
+
+  startTimerButton.textContent = "Läuft";
+  startTimerButton.disabled = true;
+  updateTimerDisplay();
+
+  timerInterval = window.setInterval(() => {
+    timerRemainingSeconds -= 1;
+    updateTimerDisplay();
+
+    if (timerRemainingSeconds <= 0) {
+      stopTimer(true);
+    }
+  }, 1000);
+}
+
+function stopTimer(completed) {
+  if (timerInterval) {
+    window.clearInterval(timerInterval);
+    timerInterval = null;
+  }
+
+  if (completed) {
+    timerRemainingSeconds = 0;
+    updateTimerDisplay();
+    startTimerButton.textContent = "Geschafft";
+  }
+}
+
+function resetAll() {
+  const confirmed = window.confirm("Alle lokalen Daten dieser App löschen?");
+  if (!confirmed) {
+    return;
+  }
+
+  state.checkins = [];
+  state.tools = [...defaultTools];
+  state.featuredActionIndex = 0;
+  state.favoriteEmergencyIds = [];
+  state.customEmergencyActions = [];
+  state.emergencyLog = [];
+  state.emergencyOrder = [];
+  state.reasons = defaultReasons;
+  state.dailyPlans = {};
+  saveState();
+  render();
+}
+
+function saveRelapseReview() {
+  const entry = ensureCheckin(dateKey());
+  entry.relapseTrigger = relapseTriggerInput.value.trim();
+  entry.nextStep = relapseNextInput.value.trim();
+  entry.updatedAt = new Date().toISOString();
+  saveState();
+  showNoteFeedback("Auswertung gespeichert");
+  renderCalendar();
+}
+
+function showNoteFeedback(text) {
+  noteSaveStatus.textContent = text;
+  window.clearTimeout(noteFeedbackTimer);
+  noteFeedbackTimer = window.setTimeout(() => {
+    noteSaveStatus.textContent = "";
+    saveCheckinNoteButton.classList.remove("saved");
+  }, 2200);
+}
+
+function animateNoteSave() {
+  saveCheckinNoteButton.classList.remove("saving", "saved");
+  saveCheckinNoteButton.textContent = "Speichert...";
+  window.requestAnimationFrame(() => {
+    saveCheckinNoteButton.classList.add("saving");
+  });
+
+  window.setTimeout(() => {
+    saveCheckinNoteButton.classList.remove("saving");
+    saveCheckinNoteButton.classList.add("saved");
+    saveCheckinNoteButton.textContent = "Gespeichert";
+  }, 260);
+
+  window.setTimeout(() => {
+    saveCheckinNoteButton.classList.remove("saved");
+    saveCheckinNoteButton.textContent = "Notiz speichern";
+  }, 1600);
+}
+
+function saveTodayNote({ feedback = true, renderAfterSave = false } = {}) {
+  const entry = ensureCheckin(dateKey());
+  entry.note = checkinNote.value.trim();
+  entry.triggers = getSelectedTriggers();
+  entry.craving = Number(cravingRange.value);
+  entry.updatedAt = new Date().toISOString();
+
+  saveState();
+
+  if (renderAfterSave) {
+    render();
+  } else {
+    renderCalendar();
+  }
+
+  if (feedback) {
+    animateNoteSave();
+    showNoteFeedback("Notiz gespeichert");
+  }
+}
+
+function getSelectedTriggers() {
+  return [...triggerGrid.querySelectorAll(".trigger-chip.active")].map((button) => button.dataset.trigger);
+}
+
+function saveTodayMeta() {
+  const entry = ensureCheckin(dateKey());
+  entry.triggers = getSelectedTriggers();
+  entry.craving = Number(cravingRange.value);
+  entry.updatedAt = new Date().toISOString();
+  saveState();
+  renderStats();
+  renderCalendar();
+}
+
+function scheduleNoteAutosave() {
+  window.clearTimeout(noteAutosaveTimer);
+  noteAutosaveTimer = window.setTimeout(() => {
+    saveTodayNote({ feedback: true, renderAfterSave: false });
+  }, 450);
+}
+
+function toggleFavorite(actionId) {
+  if (state.favoriteEmergencyIds.includes(actionId)) {
+    state.favoriteEmergencyIds = state.favoriteEmergencyIds.filter((id) => id !== actionId);
+  } else {
+    state.favoriteEmergencyIds = [actionId, ...state.favoriteEmergencyIds];
+  }
+
+  saveState();
+  renderEmergency();
+}
+
+function addCustomEmergency(event) {
+  event.preventDefault();
+
+  const title = customEmergencyTitle.value.trim();
+  const minutes = Number.parseInt(customEmergencyMinutes.value, 10);
+  const text = customEmergencyText.value.trim();
+
+  if (!title || Number.isNaN(minutes) || minutes < 1) {
+    customEmergencyTitle.focus();
+    return;
+  }
+
+  const safeMinutes = Math.min(minutes, 60);
+  state.customEmergencyActions = [
+    {
+      id: createId("custom"),
+      title,
+      time: `${safeMinutes} min`,
+      seconds: safeMinutes * 60,
+      text: text || "Fuehre diese Taetigkeit aus, bis der Timer abgelaufen ist.",
+      custom: true
+    },
+    ...state.customEmergencyActions
+  ];
+
+  customEmergencyForm.reset();
+  saveState();
+  renderEmergency();
+}
+
+function deleteCustomEmergency(actionId) {
+  state.customEmergencyActions = state.customEmergencyActions.filter((action) => action.id !== actionId);
+  state.favoriteEmergencyIds = state.favoriteEmergencyIds.filter((id) => id !== actionId);
+  saveState();
+  renderEmergency();
+}
+
+function renderCounter() {
+  const streak = getCurrentStreak();
+  const record = getRecordStreak();
+  const today = getTodayCheckin();
+  const setback = getLastSetback();
+
+  streakDays.textContent = streak;
+  recordDays.textContent = record;
+  streakLabel.textContent = streak === 1 ? "1 Tag bewusst gewählt" : `${streak} Tage bewusst gewählt`;
+  todayLabel.textContent = new Intl.DateTimeFormat("de-CH", { weekday: "long" }).format(new Date());
+
+  if (today?.status === "clean") {
+    statusHint.textContent = "Stark. Heute ist eingetragen. Morgen zählt wieder nur der nächste Schritt.";
+  } else if (today?.status === "not-clean") {
+    statusHint.textContent = "Ehrlich markiert. Kein Selbsthass: Umgebung ändern, Auslöser notieren, neu starten.";
+  } else if (today?.status === "stopped") {
+    statusHint.textContent = "Wichtig: Du hast abgebrochen. Das ist ein trainierter Ausstieg, nicht egal.";
+  } else {
+    statusHint.textContent = "Ein ehrlicher Check-in reicht. Kein Drama, nur nächster Schritt.";
+  }
+
+  if (document.activeElement !== checkinNote) {
+    checkinNote.value = today?.note ?? "";
+  }
+  relapseBox.hidden = today?.status !== "not-clean";
+  stoppedBox.hidden = today?.status !== "stopped";
+  if (document.activeElement !== relapseTriggerInput) {
+    relapseTriggerInput.value = today?.relapseTrigger ?? "";
+  }
+  if (document.activeElement !== relapseNextInput) {
+    relapseNextInput.value = today?.nextStep ?? "";
+  }
+  cravingRange.value = today?.craving ?? 0;
+  cravingValue.textContent = cravingRange.value;
+
+  lastSetback.textContent = setback
+    ? `Letzter Rückfall/Abbruch: ${formatDay(setback.date)}`
+    : "Noch kein Rückfall eingetragen.";
+
+  statusGrid.querySelectorAll("[data-status]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.status === today?.status);
+    button.setAttribute("aria-pressed", String(button.dataset.status === today?.status));
+  });
+  renderTriggers(today?.triggers ?? []);
+}
+
+function renderTriggers(selected = []) {
+  triggerGrid.innerHTML = "";
+
+  defaultTriggers.forEach((trigger) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `trigger-chip${selected.includes(trigger) ? " active" : ""}`;
+    button.dataset.trigger = trigger;
+    button.textContent = trigger;
+    bindPress(button, () => {
+      button.classList.toggle("active");
+      saveTodayMeta();
+    });
+    triggerGrid.append(button);
+  });
+}
+
+function renderEmergency() {
+  const featured = getFeaturedAction();
+  featuredTime.textContent = featured.time;
+  featuredTitle.textContent = featured.title;
+  featuredText.textContent = featured.text;
+
+  quickActions.innerHTML = "";
+  sortEmergencyActions(getEmergencyActions())
+    .filter((action) => action.id !== featured.id)
+    .slice(0, 50)
+    .forEach((action) => {
+      const row = document.createElement("div");
+      row.className = `quick-action${isFavorite(action) ? " favorite" : ""}${action.custom ? " custom" : ""}`;
+
+      const openButton = document.createElement("button");
+      openButton.type = "button";
+      openButton.className = "quick-action-main";
+      openButton.innerHTML = `<strong>${action.title}</strong><span>${action.time}</span>`;
+      bindPress(openButton, () => {
+        state.featuredActionIndex = getEmergencyActions().findIndex((item) => item.id === action.id);
+        saveState();
+        renderEmergency();
+        openEmergency(action);
+      });
+
+      const heartButton = document.createElement("button");
+      heartButton.type = "button";
+      heartButton.className = "heart-button";
+      heartButton.setAttribute("aria-label", isFavorite(action) ? "Favorit entfernen" : "Favorisieren");
+      heartButton.title = isFavorite(action) ? "Favorit entfernen" : "Favorisieren";
+      heartButton.textContent = isFavorite(action) ? "♥" : "♡";
+      bindPress(heartButton, () => toggleFavorite(action.id));
+
+      row.append(openButton, heartButton);
+
+      const upButton = document.createElement("button");
+      upButton.type = "button";
+      upButton.className = "move-emergency-button";
+      upButton.setAttribute("aria-label", "Nach oben");
+      upButton.textContent = "↑";
+      bindPress(upButton, () => moveEmergencyAction(action.id, -1));
+
+      const downButton = document.createElement("button");
+      downButton.type = "button";
+      downButton.className = "move-emergency-button";
+      downButton.setAttribute("aria-label", "Nach unten");
+      downButton.textContent = "↓";
+      bindPress(downButton, () => moveEmergencyAction(action.id, 1));
+
+      row.append(upButton, downButton);
+
+      if (action.custom) {
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "delete-emergency-button";
+        deleteButton.setAttribute("aria-label", "Eigene Aktion löschen");
+        deleteButton.title = "Eigene Aktion löschen";
+        deleteButton.textContent = "×";
+        bindPress(deleteButton, () => deleteCustomEmergency(action.id));
+        row.append(deleteButton);
+      }
+
+      quickActions.append(row);
+    });
+}
+
+function moveEmergencyAction(actionId, direction) {
+  const ids = getEmergencyActions().map((action) => action.id);
+  const index = ids.indexOf(actionId);
+  const nextIndex = index + direction;
+  if (index < 0 || nextIndex < 0 || nextIndex >= ids.length) return;
+
+  [ids[index], ids[nextIndex]] = [ids[nextIndex], ids[index]];
+  state.emergencyOrder = ids;
+  saveState();
+  renderEmergency();
+}
+
+function renderCalendar() {
+  const year = calendarCursor.getFullYear();
+  const month = calendarCursor.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const leadingBlanks = (firstDay.getDay() + 6) % 7;
+
+  calendarTitle.textContent = new Intl.DateTimeFormat("de-CH", {
+    month: "long",
+    year: "numeric"
+  }).format(calendarCursor);
+
+  calendarGrid.innerHTML = "";
+
+  for (let index = 0; index < leadingBlanks; index += 1) {
+    const empty = document.createElement("span");
+    empty.className = "calendar-day empty";
+    calendarGrid.append(empty);
+  }
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const date = new Date(year, month, day);
+    const key = dateKey(date);
+    const checkin = getCheckinByDate(key);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `calendar-day${checkin?.status ? ` ${checkin.status}` : ""}${checkin?.note ? " has-note" : ""}${key === dateKey() ? " today" : ""}`;
+    const ariaStatus = checkin?.status ? statusLabels[checkin.status] : "kein Check-in";
+    button.setAttribute("aria-label", `${formatDay(key)}: ${ariaStatus}`);
+    button.textContent = day;
+    bindPress(button, () => openDayDetails(key));
+    calendarGrid.append(button);
+  }
+}
+
+function openDayDetails(dayKey) {
+  selectedDayKey = dayKey;
+  const checkin = getCheckinByDate(dayKey);
+  const status = checkin?.status ? statusLabels[checkin.status] : "Kein Check-in";
+
+  dayModalTitle.textContent = formatDay(dayKey);
+  dayStatusPill.textContent = status;
+  dayStatusPill.className = `day-status-pill${checkin?.status ? ` ${checkin.status}` : ""}`;
+  const details = [
+    checkin?.note || "Keine Notiz gespeichert.",
+    checkin?.triggers?.length ? `\nTrigger: ${checkin.triggers.join(", ")}` : "",
+    checkin?.craving ? `\nDrang: ${checkin.craving}/10` : "",
+    checkin?.relapseTrigger ? `\nAuslöser: ${checkin.relapseTrigger}` : "",
+    checkin?.nextStep ? `\nNächstes Mal früher: ${checkin.nextStep}` : ""
+  ].join("");
+  dayNoteText.textContent = details;
+  dayStatusSelect.value = checkin?.status ?? "";
+  dayNoteEdit.value = checkin?.note ?? "";
+  dayOverlay.hidden = false;
+  document.body.classList.add("modal-open");
+}
+
+function saveDayDetails() {
+  const status = dayStatusSelect.value;
+  const note = dayNoteEdit.value.trim();
+  let entry = getCheckinByDate(selectedDayKey);
+
+  if (!entry && (status || note)) {
+    entry = ensureCheckin(selectedDayKey);
+  }
+
+  if (!entry) {
+    closeDayDetails();
+    return;
+  }
+
+  entry.status = status;
+  entry.note = note;
+  entry.updatedAt = new Date().toISOString();
+  saveState();
+  render();
+  openDayDetails(selectedDayKey);
+}
+
+function closeDayDetails() {
+  dayOverlay.hidden = true;
+  document.body.classList.remove("modal-open");
+}
+
+function renderTools() {
+  toolList.innerHTML = "";
+
+  state.tools.forEach((tool, index) => {
+    const item = document.createElement("li");
+    const text = document.createElement("span");
+    text.textContent = tool;
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.setAttribute("aria-label", "Tool löschen");
+    deleteButton.title = "Tool löschen";
+    deleteButton.textContent = "×";
+    deleteButton.addEventListener("click", () => deleteTool(index));
+
+    item.append(text, deleteButton);
+    toolList.append(item);
+  });
+}
+
+function renderHistory() {
+  historyList.innerHTML = "";
+
+  state.checkins.filter((entry) => entry.status).slice(0, 14).forEach((entry) => {
+    const item = document.createElement("li");
+    item.className = entry.status;
+    item.innerHTML = `<span>${formatDay(entry.date)}</span><strong>${statusLabels[entry.status]}</strong>`;
+    historyList.append(item);
+  });
+
+  emptyHistory.hidden = getStatusEntries().length > 0;
+}
+
+function getStatusEntries() {
+  return state.checkins.filter((entry) => entry.status);
+}
+
+function renderStats() {
+  const entries = getStatusEntries();
+  const clean = entries.filter((entry) => entry.status === "clean").length;
+  const cravings = entries.map((entry) => Number(entry.craving || 0)).filter((value) => value > 0);
+  const byMonth = new Map();
+
+  entries.forEach((entry) => {
+    const month = entry.date.slice(0, 7);
+    const data = byMonth.get(month) ?? { clean: 0, total: 0 };
+    data.total += 1;
+    if (entry.status === "clean") data.clean += 1;
+    byMonth.set(month, data);
+  });
+
+  const bestMonth = [...byMonth.entries()].sort((a, b) => b[1].clean / b[1].total - a[1].clean / a[1].total)[0];
+  statCleanRate.textContent = entries.length ? `${Math.round((clean / entries.length) * 100)}%` : "0%";
+  statCheckins.textContent = entries.length;
+  statAverageCraving.textContent = cravings.length ? (cravings.reduce((sum, value) => sum + value, 0) / cravings.length).toFixed(1) : "0";
+  statBestMonth.textContent = bestMonth ? `${bestMonth[0].slice(5)}/${bestMonth[0].slice(2, 4)}` : "-";
+  const emergencyUses = state.emergencyLog.length;
+  const emergencySuccesses = state.emergencyLog.filter((entry) => entry.success).length;
+  statEmergencyUses.textContent = emergencyUses;
+  statEmergencySuccess.textContent = emergencyUses ? `${Math.round((emergencySuccesses / emergencyUses) * 100)}%` : "0%";
+
+  const emergencyCounts = new Map();
+  state.emergencyLog.forEach((entry) => emergencyCounts.set(entry.title, (emergencyCounts.get(entry.title) ?? 0) + 1));
+  statBestEmergency.textContent = [...emergencyCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "-";
+
+  const triggerCounts = new Map();
+  entries
+    .filter((entry) => entry.status !== "clean")
+    .flatMap((entry) => entry.triggers ?? [])
+    .forEach((trigger) => triggerCounts.set(trigger, (triggerCounts.get(trigger) ?? 0) + 1));
+
+  triggerAnalysis.innerHTML = "";
+  const topTriggers = [...triggerCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+  if (!topTriggers.length) {
+    triggerAnalysis.textContent = "Noch keine Risikomuster sichtbar.";
+    return;
+  }
+  topTriggers.forEach(([trigger, count]) => {
+    const item = document.createElement("span");
+    item.textContent = `${trigger}: ${count}`;
+    triggerAnalysis.append(item);
+  });
+}
+
+function renderBadges() {
+  const record = getRecordStreak();
+  badgeGrid.innerHTML = "";
+  badgeMilestones.forEach((milestone) => {
+    const badge = document.createElement("div");
+    badge.className = `badge${record >= milestone ? " unlocked" : ""}`;
+    badge.innerHTML = `<strong>${milestone}</strong><span>Tage</span>`;
+    badgeGrid.append(badge);
+  });
+}
+
+function maybeCelebrateMilestone(oldRecord, newRecord) {
+  const hit = badgeMilestones.find((milestone) => newRecord >= milestone && oldRecord < milestone);
+  if (!hit) {
+    return;
+  }
+
+  celebrationTitle.textContent = `${hit} Tage geschafft`;
+  celebrationText.textContent = "Meilenstein freigeschaltet. Kurz stehen bleiben und merken: Das ist Fortschritt.";
+  celebration.hidden = false;
+  window.setTimeout(() => {
+    celebration.hidden = true;
+  }, 2600);
+}
+
+function getTodayPlan() {
+  const today = dateKey();
+  state.dailyPlans[today] ??= [
+    { id: createId("plan"), text: "Handy nicht ins Bett nehmen", done: false },
+    { id: createId("plan"), text: "Abends Fokusmodus aktivieren", done: false }
+  ];
+  return state.dailyPlans[today];
+}
+
+function renderPlan() {
+  planList.innerHTML = "";
+  getTodayPlan().forEach((item) => {
+    const li = document.createElement("li");
+    li.className = item.done ? "done" : "";
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.textContent = item.done ? "✓" : "○";
+    bindPress(toggle, () => {
+      item.done = !item.done;
+      saveState();
+      renderPlan();
+    });
+    const text = document.createElement("span");
+    text.textContent = item.text;
+    li.append(text, toggle);
+    planList.append(li);
+  });
+}
+
+function addPlanItem(event) {
+  event.preventDefault();
+  const text = planInput.value.trim();
+  if (!text) return;
+  getTodayPlan().unshift({ id: createId("plan"), text, done: false });
+  planInput.value = "";
+  saveState();
+  renderPlan();
+}
+
+function renderReasons() {
+  const pool = state.reasons.length ? state.reasons : defaultReasons;
+  reasonCard.textContent = pool[Math.floor(Math.random() * pool.length)] ?? "Ich will frei entscheiden können.";
+  reasonCard.classList.remove("swap");
+  window.requestAnimationFrame(() => reasonCard.classList.add("swap"));
+}
+
+function addReason(event) {
+  event.preventDefault();
+  const reason = reasonInput.value.trim();
+  if (!reason) return;
+  state.reasons.unshift(reason);
+  reasonInput.value = "";
+  saveState();
+  renderReasons();
+  renderMotivation();
+}
+
+function renderMotivation() {
+  const noteLines = state.checkins.map((entry) => entry.note).filter(Boolean).slice(0, 8);
+  const pool = [...defaultMotivations, ...state.reasons, ...noteLines];
+  motivationCard.textContent = pool[Math.floor(Math.random() * pool.length)] ?? "Heute clean bleiben.";
+  motivationCard.classList.remove("swap");
+  window.requestAnimationFrame(() => motivationCard.classList.add("swap"));
+}
+
+function startRotations() {
+  window.clearInterval(reasonRotationTimer);
+  window.clearInterval(motivationRotationTimer);
+  reasonRotationTimer = window.setInterval(renderReasons, 12000);
+  motivationRotationTimer = window.setInterval(renderMotivation, 14000);
+}
+
+function togglePrivacy() {
+  state.privacyMode = !state.privacyMode;
+  saveState();
+  renderPrivacy();
+}
+
+function renderPrivacy() {
+  document.body.classList.toggle("privacy-mode", state.privacyMode);
+  privacyButton.textContent = state.privacyMode ? "Anzeigen" : "Privat";
+  privacyCard.hidden = !state.privacyMode;
+}
+
+function exportData() {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    app: "Reset",
+    data: state
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `reset-export-${dateKey()}.json`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function switchTab(tabName) {
+  tabButtons.forEach((button) => button.classList.toggle("active", button.dataset.tabTarget === tabName));
+  tabSections.forEach((section) => {
+    section.hidden = section.dataset.tab !== tabName;
+  });
+}
+
+function render() {
+  renderCounter();
+  renderEmergency();
+  renderTools();
+  renderHistory();
+  renderCalendar();
+  renderStats();
+  renderBadges();
+  renderPlan();
+  renderReasons();
+  renderMotivation();
+  renderPrivacy();
+}
+
+statusGrid.querySelectorAll("[data-status]").forEach((button) => {
+  bindPress(button, () => setStatus(button.dataset.status));
+});
+bindPress(saveCheckinNoteButton, () => saveTodayNote({ feedback: true, renderAfterSave: true }));
+checkinNote.addEventListener("input", scheduleNoteAutosave);
+cravingRange.addEventListener("input", () => {
+  cravingValue.textContent = cravingRange.value;
+  saveTodayMeta();
+});
+
+randomEmergency.addEventListener("click", rotateEmergency);
+heroEmergencyButton.addEventListener("click", rotateEmergency);
+startFeaturedButton.addEventListener("click", () => {
+  openEmergency(getFeaturedAction());
+});
+customEmergencyForm.addEventListener("submit", addCustomEmergency);
+startTimerButton.addEventListener("click", startTimer);
+emergencySuccessButton.addEventListener("click", markEmergencySuccess);
+cancelTimerButton.addEventListener("click", closeEmergency);
+closeFocusButton.addEventListener("click", closeEmergency);
+focusOverlay.addEventListener("click", (event) => {
+  if (event.target === focusOverlay) {
+    closeEmergency();
+  }
+});
+closeDayButton.addEventListener("click", closeDayDetails);
+saveDayButton.addEventListener("click", saveDayDetails);
+dayOverlay.addEventListener("click", (event) => {
+  if (event.target === dayOverlay) {
+    closeDayDetails();
+  }
+});
+saveRelapseButton.addEventListener("click", saveRelapseReview);
+addToolButton.addEventListener("click", addTool);
+resetButton.addEventListener("click", resetAll);
+exportButton.addEventListener("click", exportData);
+prevMonthButton.addEventListener("click", () => {
+  calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() - 1, 1);
+  renderCalendar();
+});
+nextMonthButton.addEventListener("click", () => {
+  calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + 1, 1);
+  renderCalendar();
+});
+planForm.addEventListener("submit", addPlanItem);
+reasonForm.addEventListener("submit", addReason);
+newMotivationButton.addEventListener("click", renderMotivation);
+newReasonButton.addEventListener("click", renderReasons);
+bindPress(privacyButton, togglePrivacy);
+tabButtons.forEach((button) => bindPress(button, () => switchTab(button.dataset.tabTarget)));
+startRotations();
+toolInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    addTool();
+  }
+});
+
+if (location.protocol !== "file:" && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js");
+  });
+}
+
+render();
+switchTab("today");

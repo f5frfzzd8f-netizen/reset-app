@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#101820" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Reset" />
+    <title>Reset</title>
+    <link rel="manifest" href="./manifest.webmanifest?v=23" />
+    <link rel="apple-touch-icon" href="./icons/icon.svg" />
+    <link rel="stylesheet" href="./styles.css?v=23" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="hero">
+        <nav class="topbar" aria-label="App Navigation">
+          <div>
+            <p class="eyebrow">Reset</p>
+            <p class="record-badge">Rekord: <span id="recordDays">0</span> Tage</p>
+            <h1>Heute clean bleiben.</h1>
+          </div>
+          <div class="hero-actions">
+            <button class="ghost-button" id="exportButton" type="button">Export</button>
+            <button class="ghost-button" id="privacyButton" type="button">Privat</button>
+            <button class="ghost-button" id="resetButton" type="button">Reset</button>
+          </div>
+        </nav>
+
+        <section class="counter-card" aria-label="Clean Day Counter">
+          <div class="counter-ring">
+            <span id="streakDays">0</span>
+            <small>Tage</small>
+          </div>
+          <div class="counter-copy">
+            <p>Aktueller Streak</p>
+            <strong id="streakLabel">Noch kein Check-in</strong>
+            <span id="lastSetback">Starte mit dem heutigen Tag.</span>
+          </div>
+        </section>
+        <button class="hero-emergency-button" id="heroEmergencyButton" type="button">Notfall starten</button>
+      </header>
+
+      <nav class="tab-nav" aria-label="Bereiche">
+        <button class="tab-button active" type="button" data-tab-target="today">Heute</button>
+        <button class="tab-button" type="button" data-tab-target="emergency">Notfall</button>
+        <button class="tab-button" type="button" data-tab-target="analysis">Analyse</button>
+        <button class="tab-button" type="button" data-tab-target="archive">Archiv</button>
+      </nav>
+
+      <section class="privacy-card" id="privacyCard" hidden>
+        <p class="eyebrow">Privat</p>
+        <h2>Fokusmodus aktiv</h2>
+        <p>Deine Inhalte sind ausgeblendet. Notfall bleibt verfügbar.</p>
+      </section>
+
+      <section class="status-panel" data-tab="today" aria-label="Tagesstatus">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Check-in</p>
+            <h2>Wie war dein Tag?</h2>
+          </div>
+          <span id="todayLabel">Heute</span>
+        </div>
+
+        <div class="status-grid" id="statusGrid" role="group" aria-label="Status auswaehlen">
+          <button class="status-button clean" type="button" data-status="clean">
+            <span>✓</span>
+            Clean
+          </button>
+          <button class="status-button not-clean" type="button" data-status="not-clean">
+            <span>!</span>
+            Nicht clean
+          </button>
+          <button class="status-button stopped" type="button" data-status="stopped">
+            <span>↺</span>
+            Abgebrochen
+          </button>
+        </div>
+
+        <div class="checkin-extra">
+          <div>
+            <p class="field-title">Trigger</p>
+            <div class="trigger-grid" id="triggerGrid"></div>
+          </div>
+          <div>
+            <label class="field-title" for="cravingRange">Drang: <span id="cravingValue">0</span>/10</label>
+            <input id="cravingRange" class="craving-range" type="range" min="0" max="10" value="0" />
+          </div>
+        </div>
+
+        <label class="checkin-note-label" for="checkinNote">Notiz zum Tag</label>
+        <textarea
+          id="checkinNote"
+          class="checkin-note"
+          rows="4"
+          placeholder="Was hat geholfen? Was war der Ausloeser? Was willst du morgen anders machen?"
+        ></textarea>
+        <button class="note-save-button" id="saveCheckinNoteButton" type="button">Notiz speichern</button>
+        <span class="note-save-status" id="noteSaveStatus" aria-live="polite"></span>
+
+        <div class="relapse-box" id="relapseBox" hidden>
+          <p class="field-title">Kurze Auswertung</p>
+          <input id="relapseTriggerInput" type="text" autocomplete="off" placeholder="Was war der Auslöser?" />
+          <input id="relapseNextInput" type="text" autocomplete="off" placeholder="Was mache ich nächstes Mal früher?" />
+          <button class="primary-button" id="saveRelapseButton" type="button">Auswertung speichern</button>
+        </div>
+
+        <div class="stopped-box" id="stoppedBox" hidden>
+          <strong>Stark abgebrochen.</strong>
+          <span>Du hast mitten in der Schleife gestoppt. Genau das trainiert Freiheit.</span>
+        </div>
+
+        <p class="hint" id="statusHint">Ein ehrlicher Check-in reicht. Kein Drama, nur naechster Schritt.</p>
+      </section>
+
+      <section class="dashboard-panel sensitive" data-tab="analysis" aria-label="Recovery Dashboard">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Dashboard</p>
+            <h2>Deine Muster</h2>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div><strong id="statCleanRate">0%</strong><span>Clean-Quote</span></div>
+          <div><strong id="statCheckins">0</strong><span>Check-ins</span></div>
+          <div><strong id="statAverageCraving">0</strong><span>Ø Drang</span></div>
+          <div><strong id="statBestMonth">-</strong><span>Bester Monat</span></div>
+          <div><strong id="statEmergencyUses">0</strong><span>Notfälle</span></div>
+          <div><strong id="statEmergencySuccess">0%</strong><span>Erfolgreich</span></div>
+          <div><strong id="statBestEmergency">-</strong><span>Beste Hilfe</span></div>
+        </div>
+
+        <div class="analysis-box">
+          <h3>Häufige Auslöser</h3>
+          <div id="triggerAnalysis" class="analysis-list"></div>
+        </div>
+      </section>
+
+      <section class="badges-panel sensitive" data-tab="analysis" aria-label="Meilensteine">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Badges</p>
+            <h2>Meilensteine</h2>
+          </div>
+        </div>
+        <div class="badge-grid" id="badgeGrid"></div>
+      </section>
+
+      <section class="plan-panel sensitive" data-tab="today" aria-label="Tagesplan">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Tagesplan</p>
+            <h2>Schutz für heute</h2>
+          </div>
+        </div>
+        <form class="inline-form" id="planForm">
+          <input id="planInput" type="text" autocomplete="off" placeholder="z.B. Handy nicht ins Bett nehmen" />
+          <button class="primary-button" type="submit">+</button>
+        </form>
+        <ul class="tool-list" id="planList"></ul>
+      </section>
+
+      <section class="reasons-panel sensitive" data-tab="today" aria-label="Gruende">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Warum</p>
+            <h2>Warum ich aufhöre</h2>
+          </div>
+          <button class="pill-button" id="newReasonButton" type="button">Neu</button>
+        </div>
+        <form class="inline-form" id="reasonForm">
+          <input id="reasonInput" type="text" autocomplete="off" placeholder="Ein persönlicher Grund" />
+          <button class="primary-button" type="submit">+</button>
+        </form>
+        <p class="rotation-card reason-card" id="reasonCard">Ich will frei entscheiden können.</p>
+      </section>
+
+      <section class="motivation-panel sensitive" data-tab="today" aria-label="Motivation">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Motivation</p>
+            <h2>Für den Moment</h2>
+          </div>
+          <button class="pill-button" id="newMotivationButton" type="button">Neu</button>
+        </div>
+        <p class="rotation-card motivation-card" id="motivationCard">Heute reicht der nächste gute Schritt.</p>
+      </section>
+
+      <section class="calendar-panel" data-tab="archive" aria-label="Kalenderuebersicht">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Kalender</p>
+            <h2 id="calendarTitle">Dieser Monat</h2>
+          </div>
+          <div class="calendar-controls" aria-label="Monat wechseln">
+            <button class="pill-button" id="prevMonthButton" type="button" aria-label="Vorheriger Monat">‹</button>
+            <button class="pill-button" id="nextMonthButton" type="button" aria-label="Nächster Monat">›</button>
+          </div>
+        </div>
+
+        <div class="calendar-legend" aria-label="Legende">
+          <span><i class="dot clean"></i>Clean</span>
+          <span><i class="dot not-clean"></i>Nicht clean</span>
+          <span><i class="dot stopped"></i>Abgebrochen</span>
+        </div>
+
+        <div class="calendar-weekdays" aria-hidden="true">
+          <span>Mo</span>
+          <span>Di</span>
+          <span>Mi</span>
+          <span>Do</span>
+          <span>Fr</span>
+          <span>Sa</span>
+          <span>So</span>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+      </section>
+
+      <section class="emergency-panel" data-tab="emergency" aria-label="Notfallbereich">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow danger">Notfall</p>
+            <h2>Wenn der Drang gerade stark ist</h2>
+          </div>
+          <button class="pill-button danger-button" id="randomEmergency" type="button">Zufall</button>
+        </div>
+
+        <article class="action-card" id="featuredAction">
+          <span class="action-time" id="featuredTime">2 min</span>
+          <h3 id="featuredTitle">90 Sekunden warten</h3>
+          <p id="featuredText">Stell einen Timer. Atme ruhig und entscheide erst danach.</p>
+          <button class="start-featured-button" id="startFeaturedButton" type="button">Start</button>
+        </article>
+
+        <form class="custom-emergency-form" id="customEmergencyForm">
+          <input id="customEmergencyTitle" type="text" autocomplete="off" placeholder="Eigene Notfall-Aktion" />
+          <input id="customEmergencyMinutes" type="number" min="1" max="60" inputmode="numeric" placeholder="Min" />
+          <input id="customEmergencyText" type="text" autocomplete="off" placeholder="Kurzer Hinweis optional" />
+          <button class="primary-button" type="submit">Hinzufügen</button>
+        </form>
+
+        <div class="quick-actions" id="quickActions"></div>
+      </section>
+
+      <section class="custom-panel" data-tab="emergency" aria-label="Persoenliche Hilfen">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Deine Tools</p>
+            <h2>Dinge, die dir helfen</h2>
+          </div>
+        </div>
+
+        <div class="input-row">
+          <input id="toolInput" type="text" autocomplete="off" placeholder="z.B. Handy weglegen, duschen, rausgehen" />
+          <button id="addToolButton" type="button">+</button>
+        </div>
+        <ul class="tool-list" id="toolList"></ul>
+      </section>
+
+      <section class="history-panel" data-tab="archive" aria-label="Verlauf">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Verlauf</p>
+            <h2>Letzte Check-ins</h2>
+          </div>
+        </div>
+        <ol class="history-list" id="historyList"></ol>
+        <p class="empty-state" id="emptyHistory">Noch keine Check-ins.</p>
+      </section>
+    </main>
+
+    <div class="focus-overlay" id="focusOverlay" hidden>
+      <section class="focus-modal" role="dialog" aria-modal="true" aria-labelledby="focusTitle">
+        <button class="close-focus" id="closeFocusButton" type="button" aria-label="Schliessen">×</button>
+        <p class="eyebrow danger">Notfall-Fokus</p>
+        <h2 id="focusTitle">Aktion</h2>
+        <p id="focusText">Fuehre diese Taetigkeit aus, bis der Timer abgelaufen ist.</p>
+        <div class="timer-display" id="timerDisplay">00:00</div>
+        <div class="timer-progress">
+          <span id="timerProgress"></span>
+        </div>
+        <div class="timer-controls">
+          <button class="primary-button" id="startTimerButton" type="button">Start</button>
+          <button class="primary-button success-button" id="emergencySuccessButton" type="button">Geschafft</button>
+          <button class="ghost-button" id="cancelTimerButton" type="button">Abbrechen</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="day-overlay" id="dayOverlay" hidden>
+      <section class="day-modal" role="dialog" aria-modal="true" aria-labelledby="dayModalTitle">
+        <button class="close-focus" id="closeDayButton" type="button" aria-label="Schliessen">×</button>
+        <p class="eyebrow">Kalender</p>
+        <h2 id="dayModalTitle">Tag</h2>
+        <span class="day-status-pill" id="dayStatusPill">Kein Check-in</span>
+        <p id="dayNoteText" class="day-note-text">Keine Notiz gespeichert.</p>
+        <div class="day-edit">
+          <label>Status</label>
+          <select id="dayStatusSelect">
+            <option value="">Kein Check-in</option>
+            <option value="clean">Clean</option>
+            <option value="not-clean">Nicht clean</option>
+            <option value="stopped">Abgebrochen</option>
+          </select>
+          <label>Notiz</label>
+          <textarea id="dayNoteEdit" rows="4"></textarea>
+          <button class="primary-button" id="saveDayButton" type="button">Tag speichern</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="celebration" id="celebration" hidden>
+      <div class="celebration-card">
+        <strong id="celebrationTitle">Meilenstein!</strong>
+        <span id="celebrationText">Stark weitergemacht.</span>
+      </div>
+    </div>
+
+    <script src="./app.js?v=23" type="module"></script>
+  </body>
+</html>
