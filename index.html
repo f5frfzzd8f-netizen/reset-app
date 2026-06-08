@@ -8,9 +8,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Reset" />
     <title>Reset</title>
-    <link rel="manifest" href="./manifest.webmanifest?v=28" />
+    <link rel="manifest" href="./manifest.webmanifest?v=30" />
     <link rel="apple-touch-icon" href="./icons/icon.svg" />
-    <link rel="stylesheet" href="./styles.css?v=28" />
+    <link rel="stylesheet" href="./styles.css?v=30" />
   </head>
   <body>
     <main class="app-shell">
@@ -87,6 +87,10 @@
           <div>
             <p class="field-title">Trigger</p>
             <div class="trigger-grid" id="triggerGrid"></div>
+            <form class="trigger-form" id="triggerForm">
+              <input id="customTriggerInput" type="text" autocomplete="off" placeholder="Eigener Trigger" />
+              <button class="primary-button" type="submit">+</button>
+            </form>
           </div>
           <div>
             <label class="field-title" for="cravingRange">Drang: <span id="cravingValue">0</span>/10</label>
@@ -390,6 +394,6 @@
       </div>
     </div>
 
-    <script src="./app.js?v=28" defer></script>
+    <script src="./app.js?v=30" defer></script>
   </body>
 </html>

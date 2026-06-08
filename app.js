@@ -285,6 +285,7 @@ const emergencyActions = [
 ];
 
 const defaultTriggers = [
+  "Kein Trigger",
   "Stress",
   "Langeweile",
   "Einsamkeit",
@@ -440,6 +441,8 @@ const todayLabel = document.querySelector("#todayLabel");
 const statusHint = document.querySelector("#statusHint");
 const statusGrid = document.querySelector("#statusGrid");
 const triggerGrid = document.querySelector("#triggerGrid");
+const triggerForm = document.querySelector("#triggerForm");
+const customTriggerInput = document.querySelector("#customTriggerInput");
 const cravingRange = document.querySelector("#cravingRange");
 const cravingValue = document.querySelector("#cravingValue");
 const checkinNote = document.querySelector("#checkinNote");
@@ -541,6 +544,7 @@ function loadState() {
     customEmergencyActions: [],
     emergencyLog: [],
     emergencyOrder: [],
+    customTriggers: [],
     reasons: defaultReasons,
     dailyPlans: {},
     privacyMode: false
@@ -555,6 +559,7 @@ function loadState() {
       customEmergencyActions: stored?.customEmergencyActions ?? [],
       emergencyLog: stored?.emergencyLog ?? [],
       emergencyOrder: stored?.emergencyOrder ?? [],
+      customTriggers: normalizeCustomTriggers(stored?.customTriggers),
       reasons: normalizeReasons(stored?.reasons),
       dailyPlans: stored?.dailyPlans ?? {},
       privacyMode: Boolean(stored?.privacyMode)
@@ -582,6 +587,15 @@ function normalizeReasons(storedReasons) {
   }
 
   return [...new Set([...storedReasons, ...defaultReasons])];
+}
+
+function normalizeCustomTriggers(storedTriggers) {
+  if (!Array.isArray(storedTriggers)) {
+    return [];
+  }
+
+  return [...new Set(storedTriggers.map((trigger) => String(trigger).trim()).filter(Boolean))]
+    .filter((trigger) => !defaultTriggers.includes(trigger));
 }
 
 function createId(prefix) {
@@ -911,6 +925,7 @@ function resetAll() {
   state.customEmergencyActions = [];
   state.emergencyLog = [];
   state.emergencyOrder = [];
+  state.customTriggers = [];
   state.reasons = defaultReasons;
   state.dailyPlans = {};
   state.privacyMode = false;
@@ -993,7 +1008,9 @@ function saveTodayNote({ feedback = true, renderAfterSave = false } = {}) {
 }
 
 function getSelectedTriggers() {
-  return [...triggerGrid.querySelectorAll(".trigger-chip.active")].map((button) => button.dataset.trigger);
+  return [...triggerGrid.querySelectorAll(".trigger-chip.active")]
+    .map((button) => button.dataset.trigger)
+    .filter((trigger) => trigger && trigger !== "Kein Trigger");
 }
 
 function saveTodayMeta() {
@@ -1012,6 +1029,34 @@ function scheduleNoteAutosave() {
   noteAutosaveTimer = window.setTimeout(() => {
     saveTodayNote({ feedback: true, renderAfterSave: false });
   }, 450);
+}
+
+function getTriggerOptions() {
+  return [...new Set([...defaultTriggers, ...state.customTriggers])];
+}
+
+function addCustomTrigger(event) {
+  event.preventDefault();
+  const value = customTriggerInput.value.trim();
+  if (!value) {
+    customTriggerInput.focus();
+    return;
+  }
+
+  if (!getTriggerOptions().includes(value)) {
+    state.customTriggers.unshift(value);
+    saveState();
+  }
+
+  const entry = ensureCheckin(dateKey());
+  entry.triggers = [...new Set([...(entry.triggers ?? []).filter((trigger) => trigger !== "Kein Trigger"), value])];
+  entry.updatedAt = new Date().toISOString();
+  customTriggerInput.value = "";
+  saveState();
+  renderCounter();
+  renderStats();
+  renderTrendWarnings();
+  customTriggerInput.focus();
 }
 
 function toggleFavorite(actionId) {
@@ -1128,15 +1173,23 @@ function renderCounter() {
 
 function renderTriggers(selected = []) {
   triggerGrid.innerHTML = "";
+  const selectedSet = new Set(selected);
 
-  defaultTriggers.forEach((trigger) => {
+  getTriggerOptions().forEach((trigger) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `trigger-chip${selected.includes(trigger) ? " active" : ""}`;
+    const noTriggerActive = trigger === "Kein Trigger" && selectedSet.size === 0;
+    button.className = `trigger-chip${selectedSet.has(trigger) || noTriggerActive ? " active" : ""}${trigger === "Kein Trigger" ? " none" : ""}`;
     button.dataset.trigger = trigger;
     button.textContent = trigger;
     bindPress(button, () => {
-      button.classList.toggle("active");
+      if (trigger === "Kein Trigger") {
+        triggerGrid.querySelectorAll(".trigger-chip.active").forEach((chip) => chip.classList.remove("active"));
+        button.classList.add("active");
+      } else {
+        triggerGrid.querySelector('[data-trigger="Kein Trigger"]')?.classList.remove("active");
+        button.classList.toggle("active");
+      }
       saveTodayMeta();
     });
     triggerGrid.append(button);
@@ -1446,26 +1499,47 @@ function learnRiskPatterns() {
 function getTodaysRisk() {
   const today = getTodayCheckin() ?? { triggers: [], craving: 0, note: "" };
   const patterns = learnRiskPatterns();
-  const learnedEnough = state.checkins.filter((entry) => entry.status === "not-clean").length >= 2;
+  const setbackCount = state.checkins.filter((entry) => entry.status === "not-clean").length;
+  const nearMissCount = state.checkins.filter((entry) => entry.status === "stopped").length;
+  const totalCheckins = getStatusEntries().length;
+  const learnedEnough = setbackCount >= 2 || (setbackCount >= 1 && nearMissCount >= 2);
+  const hasBaseline = totalCheckins >= 5;
   const reasons = [];
   let score = 0;
-
-  if (!learnedEnough) {
-    return {
-      level: "learning",
-      score: 0,
-      reasons: [],
-      patterns
-    };
-  }
 
   const selectedTriggers = today.triggers ?? [];
   const tokens = noteTokens(today.note ?? "");
   const nowBucket = getTimeBucket(new Intl.DateTimeFormat("de-CH", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date()));
   const yesterday = getCheckinByDate(getPreviousDateKey(dateKey()));
   const twoDaysAgo = getCheckinByDate(getPreviousDateKey(dateKey(), 2));
+  const currentCraving = Number(today.craving || 0);
+  const previousEntries = [yesterday, twoDaysAgo];
+  const addRisk = (points, reason) => {
+    score += points;
+    reasons.push(reason);
+  };
+
+  if (currentCraving >= 8) {
+    addRisk(5, "Drang 8/10 oder höher");
+  } else if (currentCraving >= 6) {
+    addRisk(3, "Drang 6/10 oder höher");
+  }
+
+  if (selectedTriggers.length >= 3) {
+    addRisk(2, "mehrere Trigger gleichzeitig");
+  }
+
+  if (previousEntries.some((entry) => entry?.status === "stopped")) {
+    addRisk(2, "kürzlich abgebrochen");
+  }
+
+  if (previousEntries.some((entry) => Number(entry?.craving || 0) >= 7)) {
+    addRisk(2, "kürzlich hoher Drang");
+  }
 
   patterns.forEach((pattern) => {
+    if (!learnedEnough && !pattern.key.startsWith("near")) return;
+    if (pattern.count < 2 && !pattern.key.startsWith("craving")) return;
     const [type, value] = pattern.key.split(":");
     let matches = false;
 
@@ -1483,19 +1557,24 @@ function getTodaysRisk() {
 
     if (!matches) return;
 
-    score += Math.min(pattern.score, 4);
-    reasons.push(pattern.label);
+    const confidenceBoost = hasBaseline ? 1 : 0;
+    addRisk(Math.min(pattern.score + confidenceBoost, 5), pattern.label);
   });
 
   let level = "low";
-  if (score >= 7) level = "high";
-  else if (score >= 3) level = "medium";
+  if (!learnedEnough && score < 3) level = "learning";
+  else if (score >= 8) level = "high";
+  else if (score >= 4) level = "medium";
 
   return {
     level,
     score,
     reasons: [...new Set(reasons)].slice(0, 4),
-    patterns
+    patterns,
+    learnedEnough,
+    setbackCount,
+    nearMissCount,
+    totalCheckins
   };
 }
 
@@ -1508,18 +1587,17 @@ function renderTrendWarnings() {
   if (risk.level === "learning") {
     riskLevel.textContent = "Lernt";
     heroRiskLevel.textContent = "Lernt";
-    trendSummary.textContent =
-      "Noch nicht genug Daten. Nach zwei Nicht-clean-Einträgen erkennt die App, welche Muster bei dir häufiger davor auftauchen.";
-    heroTrendSummary.textContent = "Frühwarnsystem lernt aus deinen Check-ins.";
+    trendSummary.textContent = `Noch nicht genug Daten für persönliche Rückfallmuster. Aktuell gespeichert: ${risk.setbackCount} Nicht-clean und ${risk.nearMissCount} Abbruch.`;
+    heroTrendSummary.textContent = "Frühwarnsystem sammelt noch Daten.";
   } else if (risk.level === "high") {
     riskLevel.textContent = "Hoch";
     heroRiskLevel.textContent = "Hoch";
-    trendSummary.textContent = `Warnung: Das sieht nach einem alten Risikomuster aus. Sichtbar: ${risk.reasons.join(", ")}. Starte lieber jetzt eine Notfall-Hilfe.`;
+    trendSummary.textContent = `${risk.learnedEnough ? "Warnung: Das sieht nach einem alten Risikomuster aus." : "Warnung trotz wenig Daten: Die aktuellen Signale sind stark."} Sichtbar: ${risk.reasons.join(", ")}. Starte lieber jetzt eine Notfall-Hilfe.`;
     heroTrendSummary.textContent = `Warnung: ${risk.reasons[0] ?? "Risikomuster sichtbar"}.`;
   } else if (risk.level === "medium") {
     riskLevel.textContent = "Achtung";
     heroRiskLevel.textContent = "Achtung";
-    trendSummary.textContent = `Da ist ein Muster erkennbar: ${risk.reasons.join(", ")}. Plane jetzt eine Unterbrechung, bevor es stärker wird.`;
+    trendSummary.textContent = `${risk.learnedEnough ? "Da ist ein Muster erkennbar" : "Noch wenig Daten, aber heute ist ein Warnsignal sichtbar"}: ${risk.reasons.join(", ")}. Plane jetzt eine Unterbrechung, bevor es stärker wird.`;
     heroTrendSummary.textContent = `Achtung: ${risk.reasons[0] ?? "Muster erkennbar"}.`;
   } else {
     riskLevel.textContent = "Ruhig";
@@ -1648,6 +1726,11 @@ function renderReflection(entries) {
 
   if (!recent.length) {
     reflectionText.textContent = "Deine Reflexion erscheint hier, sobald genug Check-ins vorhanden sind.";
+    return;
+  }
+
+  if (risk.level === "learning") {
+    reflectionText.textContent = "Reflexion: Das System sammelt noch persönliche Muster. Trag weiter ehrlich Status, Trigger und Drang ein.";
     return;
   }
 
@@ -1940,11 +2023,14 @@ nextMonthButton.addEventListener("click", () => {
   renderCalendar();
 });
 planForm.addEventListener("submit", addPlanItem);
+triggerForm.addEventListener("submit", addCustomTrigger);
 reasonForm.addEventListener("submit", addReason);
 newMotivationButton.addEventListener("click", renderMotivation);
 newReasonButton.addEventListener("click", renderReasons);
 bindPress(privacyButton, togglePrivacy);
-tabButtons.forEach((button) => bindPress(button, () => switchTab(button.dataset.tabTarget)));
+tabButtons.forEach((button) => {
+  button.addEventListener("click", () => switchTab(button.dataset.tabTarget));
+});
 startRotations();
 
 if (location.protocol !== "file:" && "serviceWorker" in navigator) {

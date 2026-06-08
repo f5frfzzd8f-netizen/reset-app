@@ -1,10 +1,10 @@
-const cacheName = "reset-pwa-v28";
+const cacheName = "reset-pwa-v30";
 const filesToCache = [
   "./",
   "./index.html",
-  "./styles.css?v=28",
-  "./app.js?v=28",
-  "./manifest.webmanifest?v=28",
+  "./styles.css?v=30",
+  "./app.js?v=30",
+  "./manifest.webmanifest?v=30",
   "./icons/icon.svg"
 ];
 
