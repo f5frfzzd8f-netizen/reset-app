@@ -1,10 +1,8 @@
-const cacheName = "reset-pwa-v30";
+const cacheName = "reset-pwa-v31";
 const filesToCache = [
-  "./",
-  "./index.html",
-  "./styles.css?v=30",
-  "./app.js?v=30",
-  "./manifest.webmanifest?v=30",
+  "./styles.css?v=31",
+  "./app.js?v=31",
+  "./manifest.webmanifest?v=31",
   "./icons/icon.svg"
 ];
 
@@ -27,5 +25,30 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));
+  const request = event.request;
+  const isNavigation = request.mode === "navigate" || request.headers.get("accept")?.includes("text/html");
+
+  if (isNavigation) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(cacheName).then((cache) => cache.put("./index.html", copy));
+          return response;
+        })
+        .catch(() => caches.match("./index.html"))
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
+      return fetch(request).then((response) => {
+        const copy = response.clone();
+        caches.open(cacheName).then((cache) => cache.put(request, copy));
+        return response;
+      });
+    })
+  );
 });
