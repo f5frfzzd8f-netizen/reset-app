@@ -284,14 +284,31 @@ const emergencyActions = [
   }
 ];
 
-const defaultTools = [
-  "Handy aus dem Zimmer legen",
-  "Kurz nach draussen gehen",
-  "Kalt duschen oder Gesicht waschen"
+const defaultTriggers = [
+  "Stress",
+  "Langeweile",
+  "Einsamkeit",
+  "Müdigkeit",
+  "Social Media",
+  "Bett",
+  "Nacht",
+  "Druck",
+  "Frust",
+  "Bad",
+  "Sofa",
+  "Allein zuhause",
+  "Handy im Bett",
+  "Computer"
 ];
-
-const defaultTriggers = ["Stress", "Langeweile", "Einsamkeit", "Müdigkeit", "Social Media", "Bett", "Nacht", "Druck", "Frust"];
 const badgeMilestones = [1, 3, 7, 14, 30, 60, 90, 180, 365];
+const recoveryLevels = [
+  { min: 0, title: "Starter", text: "Du sammelst ehrliche Daten." },
+  { min: 3, title: "Aufbauer", text: "Du erkennst erste Muster." },
+  { min: 7, title: "Stabiler", text: "Du hast eine echte Serie aufgebaut." },
+  { min: 14, title: "Fokus-Profi", text: "Du schützt deine Energie sichtbar." },
+  { min: 30, title: "Reset Champion", text: "Du hast ein starkes neues Normal trainiert." },
+  { min: 90, title: "Freiheitsmodus", text: "Du spielst langfristig." }
+];
 const defaultReasons = [
   "Ich will frei entscheiden können.",
   "Ich will morgen stolz aufwachen.",
@@ -414,6 +431,8 @@ let reasonRotationTimer = null;
 let motivationRotationTimer = null;
 
 const streakDays = document.querySelector("#streakDays");
+const appEyebrow = document.querySelector(".topbar .eyebrow");
+const heroTitle = document.querySelector(".hero h1");
 const recordDays = document.querySelector("#recordDays");
 const streakLabel = document.querySelector("#streakLabel");
 const lastSetback = document.querySelector("#lastSetback");
@@ -431,10 +450,17 @@ const privacyCard = document.querySelector("#privacyCard");
 const exportButton = document.querySelector("#exportButton");
 const heroEmergencyButton = document.querySelector("#heroEmergencyButton");
 const relapseBox = document.querySelector("#relapseBox");
+const relapseTimeInput = document.querySelector("#relapseTimeInput");
+const relapseSituationInput = document.querySelector("#relapseSituationInput");
 const relapseTriggerInput = document.querySelector("#relapseTriggerInput");
+const relapseBeforeInput = document.querySelector("#relapseBeforeInput");
+const relapseEarlierInput = document.querySelector("#relapseEarlierInput");
 const relapseNextInput = document.querySelector("#relapseNextInput");
 const saveRelapseButton = document.querySelector("#saveRelapseButton");
 const stoppedBox = document.querySelector("#stoppedBox");
+const stoppedTimeInput = document.querySelector("#stoppedTimeInput");
+const stoppedSituationInput = document.querySelector("#stoppedSituationInput");
+const saveStoppedButton = document.querySelector("#saveStoppedButton");
 const featuredTime = document.querySelector("#featuredTime");
 const featuredTitle = document.querySelector("#featuredTitle");
 const featuredText = document.querySelector("#featuredText");
@@ -445,9 +471,6 @@ const customEmergencyForm = document.querySelector("#customEmergencyForm");
 const customEmergencyTitle = document.querySelector("#customEmergencyTitle");
 const customEmergencyMinutes = document.querySelector("#customEmergencyMinutes");
 const customEmergencyText = document.querySelector("#customEmergencyText");
-const toolInput = document.querySelector("#toolInput");
-const addToolButton = document.querySelector("#addToolButton");
-const toolList = document.querySelector("#toolList");
 const historyList = document.querySelector("#historyList");
 const emptyHistory = document.querySelector("#emptyHistory");
 const resetButton = document.querySelector("#resetButton");
@@ -477,7 +500,18 @@ const statEmergencyUses = document.querySelector("#statEmergencyUses");
 const statEmergencySuccess = document.querySelector("#statEmergencySuccess");
 const statBestEmergency = document.querySelector("#statBestEmergency");
 const triggerAnalysis = document.querySelector("#triggerAnalysis");
+const trendAnalysis = document.querySelector("#trendAnalysis");
+const triggerRiskAnalysis = document.querySelector("#triggerRiskAnalysis");
+const protectiveAnalysis = document.querySelector("#protectiveAnalysis");
+const weeklyReport = document.querySelector("#weeklyReport");
+const riskLevel = document.querySelector("#riskLevel");
+const trendSummary = document.querySelector("#trendSummary");
+const reflectionText = document.querySelector("#reflectionText");
+const trendActions = document.querySelector("#trendActions");
+const trendEmergencyButton = document.querySelector("#trendEmergencyButton");
+const trendPlanButton = document.querySelector("#trendPlanButton");
 const badgeGrid = document.querySelector("#badgeGrid");
+const levelCard = document.querySelector("#levelCard");
 const planForm = document.querySelector("#planForm");
 const planInput = document.querySelector("#planInput");
 const planList = document.querySelector("#planList");
@@ -500,7 +534,6 @@ let selectedDayKey = dateKey();
 function loadState() {
   const fallback = {
     checkins: [],
-    tools: defaultTools,
     featuredActionIndex: 0,
     favoriteEmergencyIds: [],
     customEmergencyActions: [],
@@ -598,6 +631,12 @@ function ensureCheckin(date = dateKey()) {
       triggers: [],
       craving: 0,
       relapseTrigger: "",
+      relapseTime: "",
+      relapseSituation: "",
+      relapseBefore: "",
+      relapseEarlier: "",
+      stoppedTime: "",
+      stoppedSituation: "",
       nextStep: "",
       updatedAt: new Date().toISOString()
     };
@@ -740,26 +779,6 @@ function getLastSetback() {
   return state.checkins.find((entry) => entry.status === "not-clean" || entry.status === "stopped");
 }
 
-function addTool() {
-  const value = toolInput.value.trim();
-  if (!value) {
-    toolInput.focus();
-    return;
-  }
-
-  state.tools = [value, ...state.tools];
-  toolInput.value = "";
-  saveState();
-  renderTools();
-  toolInput.focus();
-}
-
-function deleteTool(index) {
-  state.tools.splice(index, 1);
-  saveState();
-  renderTools();
-}
-
 function rotateEmergency() {
   const actions = getEmergencyActions();
   state.featuredActionIndex = Math.floor(Math.random() * actions.length);
@@ -885,7 +904,6 @@ function resetAll() {
   }
 
   state.checkins = [];
-  state.tools = [...defaultTools];
   state.featuredActionIndex = 0;
   state.favoriteEmergencyIds = [];
   state.customEmergencyActions = [];
@@ -893,18 +911,33 @@ function resetAll() {
   state.emergencyOrder = [];
   state.reasons = defaultReasons;
   state.dailyPlans = {};
+  state.privacyMode = false;
   saveState();
   render();
 }
 
 function saveRelapseReview() {
   const entry = ensureCheckin(dateKey());
+  entry.relapseTime = relapseTimeInput.value;
+  entry.relapseSituation = relapseSituationInput.value;
   entry.relapseTrigger = relapseTriggerInput.value.trim();
+  entry.relapseBefore = relapseBeforeInput.value.trim();
+  entry.relapseEarlier = relapseEarlierInput.value.trim();
   entry.nextStep = relapseNextInput.value.trim();
   entry.updatedAt = new Date().toISOString();
   saveState();
   showNoteFeedback("Auswertung gespeichert");
-  renderCalendar();
+  render();
+}
+
+function saveStoppedReview() {
+  const entry = ensureCheckin(dateKey());
+  entry.stoppedTime = stoppedTimeInput.value;
+  entry.stoppedSituation = stoppedSituationInput.value;
+  entry.updatedAt = new Date().toISOString();
+  saveState();
+  showNoteFeedback("Abbruch gespeichert");
+  render();
 }
 
 function showNoteFeedback(text) {
@@ -948,6 +981,7 @@ function saveTodayNote({ feedback = true, renderAfterSave = false } = {}) {
     render();
   } else {
     renderCalendar();
+    renderTrendWarnings();
   }
 
   if (feedback) {
@@ -967,6 +1001,7 @@ function saveTodayMeta() {
   entry.updatedAt = new Date().toISOString();
   saveState();
   renderStats();
+  renderTrendWarnings();
   renderCalendar();
 }
 
@@ -1051,11 +1086,29 @@ function renderCounter() {
   }
   relapseBox.hidden = today?.status !== "not-clean";
   stoppedBox.hidden = today?.status !== "stopped";
+  if (document.activeElement !== relapseTimeInput) {
+    relapseTimeInput.value = today?.relapseTime ?? "";
+  }
+  if (document.activeElement !== relapseSituationInput) {
+    relapseSituationInput.value = today?.relapseSituation ?? "";
+  }
   if (document.activeElement !== relapseTriggerInput) {
     relapseTriggerInput.value = today?.relapseTrigger ?? "";
   }
+  if (document.activeElement !== relapseBeforeInput) {
+    relapseBeforeInput.value = today?.relapseBefore ?? "";
+  }
+  if (document.activeElement !== relapseEarlierInput) {
+    relapseEarlierInput.value = today?.relapseEarlier ?? "";
+  }
   if (document.activeElement !== relapseNextInput) {
     relapseNextInput.value = today?.nextStep ?? "";
+  }
+  if (document.activeElement !== stoppedTimeInput) {
+    stoppedTimeInput.value = today?.stoppedTime ?? "";
+  }
+  if (document.activeElement !== stoppedSituationInput) {
+    stoppedSituationInput.value = today?.stoppedSituation ?? "";
   }
   cravingRange.value = today?.craving ?? 0;
   cravingValue.textContent = cravingRange.value;
@@ -1213,7 +1266,13 @@ function openDayDetails(dayKey) {
     checkin?.note || "Keine Notiz gespeichert.",
     checkin?.triggers?.length ? `\nTrigger: ${checkin.triggers.join(", ")}` : "",
     checkin?.craving ? `\nDrang: ${checkin.craving}/10` : "",
+    checkin?.relapseTime ? `\nUhrzeit: ${checkin.relapseTime}` : "",
+    checkin?.relapseSituation ? `\nSituation: ${checkin.relapseSituation}` : "",
     checkin?.relapseTrigger ? `\nAuslöser: ${checkin.relapseTrigger}` : "",
+    checkin?.relapseBefore ? `\n30 Minuten vorher: ${checkin.relapseBefore}` : "",
+    checkin?.relapseEarlier ? `\nHätte früher geholfen: ${checkin.relapseEarlier}` : "",
+    checkin?.stoppedTime ? `\nAbbruch-Uhrzeit: ${checkin.stoppedTime}` : "",
+    checkin?.stoppedSituation ? `\nAbbruch-Situation: ${checkin.stoppedSituation}` : "",
     checkin?.nextStep ? `\nNächstes Mal früher: ${checkin.nextStep}` : ""
   ].join("");
   dayNoteText.textContent = details;
@@ -1250,26 +1309,6 @@ function closeDayDetails() {
   document.body.classList.remove("modal-open");
 }
 
-function renderTools() {
-  toolList.innerHTML = "";
-
-  state.tools.forEach((tool, index) => {
-    const item = document.createElement("li");
-    const text = document.createElement("span");
-    text.textContent = tool;
-
-    const deleteButton = document.createElement("button");
-    deleteButton.type = "button";
-    deleteButton.setAttribute("aria-label", "Tool löschen");
-    deleteButton.title = "Tool löschen";
-    deleteButton.textContent = "×";
-    deleteButton.addEventListener("click", () => deleteTool(index));
-
-    item.append(text, deleteButton);
-    toolList.append(item);
-  });
-}
-
 function renderHistory() {
   historyList.innerHTML = "";
 
@@ -1285,6 +1324,338 @@ function renderHistory() {
 
 function getStatusEntries() {
   return state.checkins.filter((entry) => entry.status);
+}
+
+function getPreviousDateKey(value, offset = 1) {
+  const date = new Date(`${value}T12:00:00`);
+  date.setDate(date.getDate() - offset);
+  return dateKey(date);
+}
+
+function getTimeBucket(time = "") {
+  const hour = Number(time.split(":")[0]);
+  if (Number.isNaN(hour)) return "";
+  if (hour < 6) return "Nacht";
+  if (hour < 12) return "Morgen";
+  if (hour < 18) return "Nachmittag";
+  if (hour < 22) return "Abend";
+  return "Spätabend";
+}
+
+function addPattern(patterns, key, label, score = 1) {
+  const item = patterns.get(key) ?? { key, label, score: 0, count: 0 };
+  item.score += score;
+  item.count += 1;
+  patterns.set(key, item);
+}
+
+function noteTokens(text = "") {
+  const stopWords = new Set([
+    "aber",
+    "auch",
+    "dann",
+    "dass",
+    "eine",
+    "einen",
+    "einer",
+    "heute",
+    "immer",
+    "mein",
+    "meine",
+    "nicht",
+    "noch",
+    "oder",
+    "schon",
+    "weil",
+    "wenn",
+    "wieder",
+    "wurde"
+  ]);
+
+  return text
+    .toLowerCase()
+    .replace(/[^a-zäöüß\s-]/g, " ")
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter((word) => word.length >= 5 && !stopWords.has(word));
+}
+
+function learnRiskPatterns() {
+  const byDate = new Map(state.checkins.map((entry) => [entry.date, entry]));
+  const setbacks = state.checkins.filter((entry) => entry.status === "not-clean");
+  const nearMisses = state.checkins.filter((entry) => entry.status === "stopped");
+  const patterns = new Map();
+
+  setbacks.forEach((entry) => {
+    (entry.triggers ?? []).forEach((trigger) => addPattern(patterns, `trigger:${trigger}`, `Trigger: ${trigger}`, 2));
+
+    if (entry.relapseSituation) {
+      addPattern(patterns, `situation:${entry.relapseSituation}`, `Situation: ${entry.relapseSituation}`, 2);
+    }
+
+    const timeBucket = getTimeBucket(entry.relapseTime);
+    if (timeBucket) {
+      addPattern(patterns, `time:${timeBucket}`, `Uhrzeit: ${timeBucket}`, 1);
+    }
+
+    const craving = Number(entry.craving || 0);
+    if (craving >= 7) {
+      addPattern(patterns, "craving:7", "Drang 7/10 oder höher", 2);
+    } else if (craving >= 5) {
+      addPattern(patterns, "craving:5", "Drang 5/10 oder höher", 1);
+    }
+
+    noteTokens(`${entry.note ?? ""} ${entry.relapseTrigger ?? ""} ${entry.relapseBefore ?? ""}`).forEach((word) => {
+      addPattern(patterns, `word:${word}`, `Notizwort: ${word}`, 1);
+    });
+
+    for (let offset = 1; offset <= 2; offset += 1) {
+      const previous = byDate.get(getPreviousDateKey(entry.date, offset));
+      if (!previous) continue;
+
+      (previous.triggers ?? []).forEach((trigger) => {
+        addPattern(patterns, `pretrigger:${trigger}`, `Vorher oft: ${trigger}`, 1);
+      });
+
+      if (Number(previous.craving || 0) >= 6) {
+        addPattern(patterns, "precraving:6", "Vortage mit Drang 6/10+", 1);
+      }
+
+      if (previous.status === "stopped") {
+        addPattern(patterns, "previous:stopped", "Kurz vorher abgebrochen", 2);
+      }
+    }
+  });
+
+  nearMisses.forEach((entry) => {
+    (entry.triggers ?? []).forEach((trigger) => addPattern(patterns, `near:${trigger}`, `Abbruch-Moment: ${trigger}`, 1));
+    if (entry.stoppedSituation) {
+      addPattern(patterns, `near-situation:${entry.stoppedSituation}`, `Abbruch-Situation: ${entry.stoppedSituation}`, 1);
+    }
+    const stoppedBucket = getTimeBucket(entry.stoppedTime);
+    if (stoppedBucket) {
+      addPattern(patterns, `near-time:${stoppedBucket}`, `Abbruch-Zeit: ${stoppedBucket}`, 1);
+    }
+  });
+
+  return [...patterns.values()].sort((a, b) => b.score - a.score || b.count - a.count);
+}
+
+function getTodaysRisk() {
+  const today = getTodayCheckin() ?? { triggers: [], craving: 0, note: "" };
+  const patterns = learnRiskPatterns();
+  const learnedEnough = state.checkins.filter((entry) => entry.status === "not-clean").length >= 2;
+  const reasons = [];
+  let score = 0;
+
+  if (!learnedEnough) {
+    return {
+      level: "learning",
+      score: 0,
+      reasons: [],
+      patterns
+    };
+  }
+
+  const selectedTriggers = today.triggers ?? [];
+  const tokens = noteTokens(today.note ?? "");
+  const nowBucket = getTimeBucket(new Intl.DateTimeFormat("de-CH", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date()));
+  const yesterday = getCheckinByDate(getPreviousDateKey(dateKey()));
+  const twoDaysAgo = getCheckinByDate(getPreviousDateKey(dateKey(), 2));
+
+  patterns.forEach((pattern) => {
+    const [type, value] = pattern.key.split(":");
+    let matches = false;
+
+    if ((type === "trigger" || type === "near") && selectedTriggers.includes(value)) matches = true;
+    if (type === "pretrigger" && selectedTriggers.includes(value)) matches = true;
+    if (type === "situation" && selectedTriggers.includes(value)) matches = true;
+    if (type === "near-situation" && selectedTriggers.includes(value)) matches = true;
+    if (type === "time" && value === nowBucket) matches = true;
+    if (type === "near-time" && value === nowBucket) matches = true;
+    if (type === "word" && tokens.includes(value)) matches = true;
+    if (pattern.key === "craving:7" && Number(today.craving || 0) >= 7) matches = true;
+    if (pattern.key === "craving:5" && Number(today.craving || 0) >= 5) matches = true;
+    if (pattern.key === "precraving:6" && [yesterday, twoDaysAgo].some((entry) => Number(entry?.craving || 0) >= 6)) matches = true;
+    if (pattern.key === "previous:stopped" && [yesterday, twoDaysAgo].some((entry) => entry?.status === "stopped")) matches = true;
+
+    if (!matches) return;
+
+    score += Math.min(pattern.score, 4);
+    reasons.push(pattern.label);
+  });
+
+  let level = "low";
+  if (score >= 7) level = "high";
+  else if (score >= 3) level = "medium";
+
+  return {
+    level,
+    score,
+    reasons: [...new Set(reasons)].slice(0, 4),
+    patterns
+  };
+}
+
+function renderTrendWarnings() {
+  const risk = getTodaysRisk();
+  riskLevel.className = `risk-pill ${risk.level}`;
+  trendActions.hidden = risk.level !== "medium" && risk.level !== "high";
+
+  if (risk.level === "learning") {
+    riskLevel.textContent = "Lernt";
+    trendSummary.textContent =
+      "Noch nicht genug Daten. Nach zwei Nicht-clean-Einträgen erkennt die App, welche Muster bei dir häufiger davor auftauchen.";
+  } else if (risk.level === "high") {
+    riskLevel.textContent = "Hoch";
+    trendSummary.textContent = `Warnung: Das sieht nach einem alten Risikomuster aus. Sichtbar: ${risk.reasons.join(", ")}. Starte lieber jetzt eine Notfall-Hilfe.`;
+  } else if (risk.level === "medium") {
+    riskLevel.textContent = "Achtung";
+    trendSummary.textContent = `Da ist ein Muster erkennbar: ${risk.reasons.join(", ")}. Plane jetzt eine Unterbrechung, bevor es stärker wird.`;
+  } else {
+    riskLevel.textContent = "Ruhig";
+    trendSummary.textContent = "Aktuell ist kein starkes Rückfallmuster sichtbar. Bleib beim Check-in und halte den Tagesplan einfach.";
+  }
+
+  trendAnalysis.innerHTML = "";
+  const topPatterns = risk.patterns.slice(0, 7);
+  if (!topPatterns.length) {
+    trendAnalysis.textContent = "Noch keine gelernten Warnzeichen.";
+    return;
+  }
+
+  topPatterns.forEach((pattern) => {
+    const item = document.createElement("span");
+    item.textContent = `${pattern.label}: ${pattern.count}x`;
+    trendAnalysis.append(item);
+  });
+}
+
+function getTriggerRiskScores(entries) {
+  const scores = new Map();
+  entries.forEach((entry) => {
+    (entry.triggers ?? []).forEach((trigger) => {
+      const score = scores.get(trigger) ?? { trigger, total: 0, setbacks: 0, clean: 0 };
+      score.total += 1;
+      if (entry.status === "not-clean") score.setbacks += 1;
+      if (entry.status === "clean") score.clean += 1;
+      scores.set(trigger, score);
+    });
+  });
+
+  return [...scores.values()]
+    .filter((score) => score.total >= 1)
+    .map((score) => ({ ...score, risk: Math.round((score.setbacks / score.total) * 100) }))
+    .sort((a, b) => b.risk - a.risk || b.total - a.total);
+}
+
+function renderTriggerRisk(entries) {
+  triggerRiskAnalysis.innerHTML = "";
+  const scores = getTriggerRiskScores(entries).filter((score) => score.setbacks > 0).slice(0, 7);
+
+  if (!scores.length) {
+    triggerRiskAnalysis.textContent = "Noch keine Risiko-Scores sichtbar.";
+    return;
+  }
+
+  scores.forEach((score) => {
+    const item = document.createElement("span");
+    item.textContent = `${score.trigger}: ${score.risk}% Risiko`;
+    triggerRiskAnalysis.append(item);
+  });
+}
+
+function renderProtectiveFactors(entries) {
+  protectiveAnalysis.innerHTML = "";
+  const scores = getTriggerRiskScores(entries).filter((score) => score.clean > 0).slice(0, 7);
+  const helpfulNotes = entries
+    .filter((entry) => entry.status === "clean" && entry.note)
+    .flatMap((entry) => noteTokens(entry.note))
+    .reduce((map, word) => map.set(word, (map.get(word) ?? 0) + 1), new Map());
+
+  const protection = scores
+    .map((score) => ({ label: score.trigger, value: Math.round((score.clean / score.total) * 100), count: score.clean }))
+    .filter((score) => score.value >= 50);
+
+  const noteItems = [...helpfulNotes.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([word, count]) => ({ label: word, value: 100, count }));
+
+  [...protection, ...noteItems].slice(0, 8).forEach((item) => {
+    const el = document.createElement("span");
+    el.textContent = `${item.label}: ${item.count}x hilfreich`;
+    protectiveAnalysis.append(el);
+  });
+
+  if (!protectiveAnalysis.children.length) {
+    protectiveAnalysis.textContent = "Noch zu wenig Clean-Tage mit Triggern/Notizen.";
+  }
+}
+
+function startOfWeek(date = new Date()) {
+  const copy = new Date(date);
+  const day = (copy.getDay() + 6) % 7;
+  copy.setHours(12, 0, 0, 0);
+  copy.setDate(copy.getDate() - day);
+  return copy;
+}
+
+function renderWeeklyReport(entries) {
+  const weekStart = startOfWeek();
+  const weekEntries = entries.filter((entry) => new Date(`${entry.date}T12:00:00`) >= weekStart);
+  const clean = weekEntries.filter((entry) => entry.status === "clean").length;
+  const setbacks = weekEntries.filter((entry) => entry.status === "not-clean").length;
+  const stopped = weekEntries.filter((entry) => entry.status === "stopped").length;
+  const topTrigger = getTriggerRiskScores(weekEntries).sort((a, b) => b.total - a.total)[0]?.trigger ?? "-";
+  const bestTool = state.emergencyLog.filter((entry) => entry.success).slice(0, 1)[0]?.title ?? "-";
+
+  weeklyReport.innerHTML = "";
+  [
+    [`${clean}/${weekEntries.length || 0}`, "Clean diese Woche"],
+    [setbacks, "Nicht clean"],
+    [stopped, "Abgebrochen"],
+    [topTrigger, "Häufigstes Thema"],
+    [bestTool, "Letzte starke Hilfe"]
+  ].forEach(([value, label]) => {
+    const item = document.createElement("div");
+    const strong = document.createElement("strong");
+    const span = document.createElement("span");
+    strong.textContent = value;
+    span.textContent = label;
+    item.append(strong, span);
+    weeklyReport.append(item);
+  });
+}
+
+function renderReflection(entries) {
+  const recent = [...entries].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 7);
+  const risk = getTodaysRisk();
+  const cleanNotes = recent.filter((entry) => entry.status === "clean" && entry.note);
+  const setbacks = recent.filter((entry) => entry.status === "not-clean");
+  const strongestTrigger = getTriggerRiskScores(recent)[0]?.trigger;
+
+  if (!recent.length) {
+    reflectionText.textContent = "Deine Reflexion erscheint hier, sobald genug Check-ins vorhanden sind.";
+    return;
+  }
+
+  if (risk.level === "high" || risk.level === "medium") {
+    reflectionText.textContent = `Reflexion: Heute passt etwas zu alten Mustern. ${risk.reasons[0] ?? "Hoher Drang"} ist sichtbar. Der beste Schritt ist jetzt eine konkrete Unterbrechung.`;
+    return;
+  }
+
+  if (setbacks.length && strongestTrigger) {
+    reflectionText.textContent = `Reflexion: In den letzten Tagen taucht "${strongestTrigger}" auffällig auf. Wenn es heute erscheint, früher Umgebung wechseln.`;
+    return;
+  }
+
+  if (cleanNotes.length) {
+    reflectionText.textContent = `Reflexion: Deine Clean-Tage haben Hinweise. Lies die letzte gute Notiz nochmal: "${cleanNotes[0].note.slice(0, 90)}"`;
+    return;
+  }
+
+  reflectionText.textContent = "Reflexion: Diese Woche wirkt ruhig. Halte den Check-in einfach und lass den Tagesplan klein genug, dass du ihn wirklich machst.";
 }
 
 function renderStats() {
@@ -1325,22 +1696,50 @@ function renderStats() {
   const topTriggers = [...triggerCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
   if (!topTriggers.length) {
     triggerAnalysis.textContent = "Noch keine Risikomuster sichtbar.";
-    return;
+  } else {
+    topTriggers.forEach(([trigger, count]) => {
+      const item = document.createElement("span");
+      item.textContent = `${trigger}: ${count}`;
+      triggerAnalysis.append(item);
+    });
   }
-  topTriggers.forEach(([trigger, count]) => {
-    const item = document.createElement("span");
-    item.textContent = `${trigger}: ${count}`;
-    triggerAnalysis.append(item);
-  });
+
+  renderTriggerRisk(entries);
+  renderProtectiveFactors(entries);
+  renderWeeklyReport(entries);
+  renderReflection(entries);
 }
 
 function renderBadges() {
   const record = getRecordStreak();
+  const emergencySuccesses = state.emergencyLog.filter((entry) => entry.success).length;
+  const stoppedCount = state.checkins.filter((entry) => entry.status === "stopped").length;
+  const level = [...recoveryLevels].reverse().find((item) => record >= item.min) ?? recoveryLevels[0];
+  const nextLevel = recoveryLevels.find((item) => item.min > record);
+
+  levelCard.innerHTML = "";
+  const levelTitle = document.createElement("strong");
+  const levelText = document.createElement("span");
+  levelTitle.textContent = level.title;
+  levelText.textContent = `${level.text}${nextLevel ? ` Noch ${nextLevel.min - record} Rekord-Tage bis ${nextLevel.title}.` : " Maximales Level erreicht."}`;
+  levelCard.append(levelTitle, levelText);
+
   badgeGrid.innerHTML = "";
   badgeMilestones.forEach((milestone) => {
     const badge = document.createElement("div");
     badge.className = `badge${record >= milestone ? " unlocked" : ""}`;
     badge.innerHTML = `<strong>${milestone}</strong><span>Tage</span>`;
+    badgeGrid.append(badge);
+  });
+
+  [
+    { unlocked: stoppedCount >= 3, title: "3", text: "Abbrüche trainiert" },
+    { unlocked: emergencySuccesses >= 5, title: "5", text: "Notfälle gemeistert" },
+    { unlocked: getStatusEntries().length >= 14, title: "14", text: "Check-ins gemacht" }
+  ].forEach((extra) => {
+    const badge = document.createElement("div");
+    badge.className = `badge special${extra.unlocked ? " unlocked" : ""}`;
+    badge.innerHTML = `<strong>${extra.title}</strong><span>${extra.text}</span>`;
     badgeGrid.append(badge);
   });
 }
@@ -1441,6 +1840,8 @@ function renderPrivacy() {
   document.body.classList.toggle("privacy-mode", state.privacyMode);
   privacyButton.textContent = state.privacyMode ? "Anzeigen" : "Privat";
   privacyCard.hidden = !state.privacyMode;
+  appEyebrow.textContent = state.privacyMode ? "Fokus" : "Reset";
+  heroTitle.textContent = state.privacyMode ? "Tagesfokus." : "Heute clean bleiben.";
 }
 
 function exportData() {
@@ -1470,10 +1871,10 @@ function switchTab(tabName) {
 function render() {
   renderCounter();
   renderEmergency();
-  renderTools();
   renderHistory();
   renderCalendar();
   renderStats();
+  renderTrendWarnings();
   renderBadges();
   renderPlan();
   renderReasons();
@@ -1493,6 +1894,8 @@ cravingRange.addEventListener("input", () => {
 
 randomEmergency.addEventListener("click", rotateEmergency);
 heroEmergencyButton.addEventListener("click", rotateEmergency);
+trendEmergencyButton.addEventListener("click", rotateEmergency);
+trendPlanButton.addEventListener("click", () => switchTab("today"));
 startFeaturedButton.addEventListener("click", () => {
   openEmergency(getFeaturedAction());
 });
@@ -1514,7 +1917,7 @@ dayOverlay.addEventListener("click", (event) => {
   }
 });
 saveRelapseButton.addEventListener("click", saveRelapseReview);
-addToolButton.addEventListener("click", addTool);
+saveStoppedButton.addEventListener("click", saveStoppedReview);
 resetButton.addEventListener("click", resetAll);
 exportButton.addEventListener("click", exportData);
 prevMonthButton.addEventListener("click", () => {
@@ -1532,11 +1935,6 @@ newReasonButton.addEventListener("click", renderReasons);
 bindPress(privacyButton, togglePrivacy);
 tabButtons.forEach((button) => bindPress(button, () => switchTab(button.dataset.tabTarget)));
 startRotations();
-toolInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    addTool();
-  }
-});
 
 if (location.protocol !== "file:" && "serviceWorker" in navigator) {
   window.addEventListener("load", () => {

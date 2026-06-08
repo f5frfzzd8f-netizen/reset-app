@@ -8,9 +8,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Reset" />
     <title>Reset</title>
-    <link rel="manifest" href="./manifest.webmanifest?v=23" />
+    <link rel="manifest" href="./manifest.webmanifest?v=27" />
     <link rel="apple-touch-icon" href="./icons/icon.svg" />
-    <link rel="stylesheet" href="./styles.css?v=23" />
+    <link rel="stylesheet" href="./styles.css?v=27" />
   </head>
   <body>
     <main class="app-shell">
@@ -101,8 +101,31 @@
         <span class="note-save-status" id="noteSaveStatus" aria-live="polite"></span>
 
         <div class="relapse-box" id="relapseBox" hidden>
-          <p class="field-title">Kurze Auswertung</p>
+          <p class="field-title">Rückfall-Analyse</p>
+          <div class="relapse-grid">
+            <label>
+              Uhrzeit
+              <input id="relapseTimeInput" type="time" />
+            </label>
+            <label>
+              Situation
+              <select id="relapseSituationInput">
+                <option value="">Auswählen</option>
+                <option>Bett</option>
+                <option>Bad</option>
+                <option>Sofa</option>
+                <option>Allein zuhause</option>
+                <option>Handy im Bett</option>
+                <option>Nach Social Media</option>
+                <option>Nach Stress</option>
+                <option>Nachts</option>
+                <option>Computer</option>
+              </select>
+            </label>
+          </div>
           <input id="relapseTriggerInput" type="text" autocomplete="off" placeholder="Was war der Auslöser?" />
+          <input id="relapseBeforeInput" type="text" autocomplete="off" placeholder="Was war 30 Minuten vorher?" />
+          <input id="relapseEarlierInput" type="text" autocomplete="off" placeholder="Was hätte früher geholfen?" />
           <input id="relapseNextInput" type="text" autocomplete="off" placeholder="Was mache ich nächstes Mal früher?" />
           <button class="primary-button" id="saveRelapseButton" type="button">Auswertung speichern</button>
         </div>
@@ -110,9 +133,47 @@
         <div class="stopped-box" id="stoppedBox" hidden>
           <strong>Stark abgebrochen.</strong>
           <span>Du hast mitten in der Schleife gestoppt. Genau das trainiert Freiheit.</span>
+          <div class="relapse-grid">
+            <label>
+              Uhrzeit
+              <input id="stoppedTimeInput" type="time" />
+            </label>
+            <label>
+              Situation
+              <select id="stoppedSituationInput">
+                <option value="">Auswählen</option>
+                <option>Bett</option>
+                <option>Bad</option>
+                <option>Sofa</option>
+                <option>Allein zuhause</option>
+                <option>Handy im Bett</option>
+                <option>Nach Social Media</option>
+                <option>Nach Stress</option>
+                <option>Nachts</option>
+                <option>Computer</option>
+              </select>
+            </label>
+          </div>
+          <button class="primary-button" id="saveStoppedButton" type="button">Abbruch speichern</button>
         </div>
 
         <p class="hint" id="statusHint">Ein ehrlicher Check-in reicht. Kein Drama, nur naechster Schritt.</p>
+      </section>
+
+      <section class="trend-panel sensitive" data-tab="today" aria-label="Trend-Warner">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Trend-Warner</p>
+            <h2>Frühwarnsystem</h2>
+          </div>
+          <span class="risk-pill" id="riskLevel">Lernt</span>
+        </div>
+        <p class="trend-summary" id="trendSummary">Noch nicht genug Daten. Je ehrlicher du checkst, desto besser erkennt die App deine Muster.</p>
+        <p class="reflection-text" id="reflectionText">Deine Reflexion erscheint hier, sobald genug Check-ins vorhanden sind.</p>
+        <div class="trend-actions" id="trendActions" hidden>
+          <button class="primary-button" id="trendEmergencyButton" type="button">Notfall starten</button>
+          <button class="pill-button" id="trendPlanButton" type="button">Tagesplan öffnen</button>
+        </div>
       </section>
 
       <section class="dashboard-panel sensitive" data-tab="analysis" aria-label="Recovery Dashboard">
@@ -137,6 +198,26 @@
           <h3>Häufige Auslöser</h3>
           <div id="triggerAnalysis" class="analysis-list"></div>
         </div>
+
+        <div class="analysis-box">
+          <h3>Gelernte Warnzeichen</h3>
+          <div id="trendAnalysis" class="analysis-list trend-list"></div>
+        </div>
+
+        <div class="analysis-box">
+          <h3>Risiko pro Trigger</h3>
+          <div id="triggerRiskAnalysis" class="analysis-list risk-list"></div>
+        </div>
+
+        <div class="analysis-box">
+          <h3>Was an Clean-Tagen hilft</h3>
+          <div id="protectiveAnalysis" class="analysis-list protection-list"></div>
+        </div>
+
+        <div class="analysis-box">
+          <h3>Wochenbericht</h3>
+          <div id="weeklyReport" class="weekly-report"></div>
+        </div>
       </section>
 
       <section class="badges-panel sensitive" data-tab="analysis" aria-label="Meilensteine">
@@ -146,6 +227,7 @@
             <h2>Meilensteine</h2>
           </div>
         </div>
+        <div class="level-card" id="levelCard"></div>
         <div class="badge-grid" id="badgeGrid"></div>
       </section>
 
@@ -245,21 +327,6 @@
         <div class="quick-actions" id="quickActions"></div>
       </section>
 
-      <section class="custom-panel" data-tab="emergency" aria-label="Persoenliche Hilfen">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">Deine Tools</p>
-            <h2>Dinge, die dir helfen</h2>
-          </div>
-        </div>
-
-        <div class="input-row">
-          <input id="toolInput" type="text" autocomplete="off" placeholder="z.B. Handy weglegen, duschen, rausgehen" />
-          <button id="addToolButton" type="button">+</button>
-        </div>
-        <ul class="tool-list" id="toolList"></ul>
-      </section>
-
       <section class="history-panel" data-tab="archive" aria-label="Verlauf">
         <div class="section-head">
           <div>
@@ -319,6 +386,6 @@
       </div>
     </div>
 
-    <script src="./app.js?v=23" type="module"></script>
+    <script src="./app.js?v=27" defer></script>
   </body>
 </html>
