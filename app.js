@@ -506,6 +506,8 @@ const protectiveAnalysis = document.querySelector("#protectiveAnalysis");
 const weeklyReport = document.querySelector("#weeklyReport");
 const riskLevel = document.querySelector("#riskLevel");
 const trendSummary = document.querySelector("#trendSummary");
+const heroRiskLevel = document.querySelector("#heroRiskLevel");
+const heroTrendSummary = document.querySelector("#heroTrendSummary");
 const reflectionText = document.querySelector("#reflectionText");
 const trendActions = document.querySelector("#trendActions");
 const trendEmergencyButton = document.querySelector("#trendEmergencyButton");
@@ -1500,21 +1502,30 @@ function getTodaysRisk() {
 function renderTrendWarnings() {
   const risk = getTodaysRisk();
   riskLevel.className = `risk-pill ${risk.level}`;
+  heroRiskLevel.className = `risk-pill ${risk.level}`;
   trendActions.hidden = risk.level !== "medium" && risk.level !== "high";
 
   if (risk.level === "learning") {
     riskLevel.textContent = "Lernt";
+    heroRiskLevel.textContent = "Lernt";
     trendSummary.textContent =
       "Noch nicht genug Daten. Nach zwei Nicht-clean-Einträgen erkennt die App, welche Muster bei dir häufiger davor auftauchen.";
+    heroTrendSummary.textContent = "Frühwarnsystem lernt aus deinen Check-ins.";
   } else if (risk.level === "high") {
     riskLevel.textContent = "Hoch";
+    heroRiskLevel.textContent = "Hoch";
     trendSummary.textContent = `Warnung: Das sieht nach einem alten Risikomuster aus. Sichtbar: ${risk.reasons.join(", ")}. Starte lieber jetzt eine Notfall-Hilfe.`;
+    heroTrendSummary.textContent = `Warnung: ${risk.reasons[0] ?? "Risikomuster sichtbar"}.`;
   } else if (risk.level === "medium") {
     riskLevel.textContent = "Achtung";
+    heroRiskLevel.textContent = "Achtung";
     trendSummary.textContent = `Da ist ein Muster erkennbar: ${risk.reasons.join(", ")}. Plane jetzt eine Unterbrechung, bevor es stärker wird.`;
+    heroTrendSummary.textContent = `Achtung: ${risk.reasons[0] ?? "Muster erkennbar"}.`;
   } else {
     riskLevel.textContent = "Ruhig";
+    heroRiskLevel.textContent = "Ruhig";
     trendSummary.textContent = "Aktuell ist kein starkes Rückfallmuster sichtbar. Bleib beim Check-in und halte den Tagesplan einfach.";
+    heroTrendSummary.textContent = "Aktuell kein starkes Rückfallmuster sichtbar.";
   }
 
   trendAnalysis.innerHTML = "";

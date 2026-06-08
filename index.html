@@ -8,9 +8,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Reset" />
     <title>Reset</title>
-    <link rel="manifest" href="./manifest.webmanifest?v=27" />
+    <link rel="manifest" href="./manifest.webmanifest?v=28" />
     <link rel="apple-touch-icon" href="./icons/icon.svg" />
-    <link rel="stylesheet" href="./styles.css?v=27" />
+    <link rel="stylesheet" href="./styles.css?v=28" />
   </head>
   <body>
     <main class="app-shell">
@@ -40,6 +40,10 @@
           </div>
         </section>
         <button class="hero-emergency-button" id="heroEmergencyButton" type="button">Notfall starten</button>
+        <section class="hero-risk-card" aria-label="Fruehwarnsystem kompakt">
+          <span class="risk-pill" id="heroRiskLevel">Lernt</span>
+          <p id="heroTrendSummary">Frühwarnsystem lädt.</p>
+        </section>
       </header>
 
       <nav class="tab-nav" aria-label="Bereiche">
@@ -386,6 +390,6 @@
       </div>
     </div>
 
-    <script src="./app.js?v=27" defer></script>
+    <script src="./app.js?v=28" defer></script>
   </body>
 </html>
